@@ -1,0 +1,92 @@
+'use client';
+
+import { cn } from '@/lib/utils';
+import { Table as AriaTable, TableHeader, Column, TableBody, Row, Cell } from 'react-aria-components';
+
+type TableProps = {
+  headers: string[];
+  children: React.ReactNode;
+  className?: string;
+  label?: string;
+};
+
+export function Table({ headers, children, className, label = 'Data Table' }: TableProps) {
+  return (
+    <div className={cn('bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden', className)}>
+      <div className="overflow-x-auto">
+        <AriaTable aria-label={label} className="w-full border-collapse">
+          <TableHeader className="bg-[#e9ccbf]/30 border-b border-gray-150">
+            {headers.map((header, idx) => (
+              <Column
+                key={idx}
+                isRowHeader={idx === 0}
+                className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#8d6e63] text-left outline-none"
+              >
+                {header}
+              </Column>
+            ))}
+          </TableHeader>
+          <TableBody>{children}</TableBody>
+        </AriaTable>
+      </div>
+    </div>
+  );
+}
+
+type TableRowProps = {
+  children: React.ReactNode;
+};
+
+export function TableRow({ children }: TableRowProps) {
+  return (
+    <Row className="border-t border-gray-100 hover:bg-gray-50/50 focus:outline-none transition-colors">
+      {children}
+    </Row>
+  );
+}
+
+type TableCellProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+export function TableCell({ children, className }: TableCellProps) {
+  return (
+    <Cell className={cn('px-4 py-3.5 text-sm text-gray-700 outline-none', className)}>
+      {children}
+    </Cell>
+  );
+}
+
+type StatusBadgeProps = {
+  status: 'available' | 'unavailable' | 'approved' | 'pending' | 'rejected' | 'forwarded';
+};
+
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const colors = {
+    available: 'bg-green-50 text-green-700 border-green-200',
+    unavailable: 'bg-red-50 text-red-700 border-red-200',
+    approved: 'bg-green-50 text-green-700 border-green-200',
+    pending: 'bg-amber-50 text-amber-700 border-amber-200',
+    rejected: 'bg-red-50 text-red-700 border-red-200',
+    forwarded: 'bg-blue-50 text-blue-700 border-blue-200',
+  };
+
+  return (
+    <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold border inline-flex items-center', colors[status])}>
+      {status}
+    </span>
+  );
+}
+
+type RoleBadgeProps = {
+  role: string;
+};
+
+export function RoleBadge({ role }: RoleBadgeProps) {
+  return (
+    <span className="px-2.5 py-1 rounded-full font-medium bg-gray-50 border border-gray-200 text-gray-600 text-xs inline-flex items-center">
+      {role}
+    </span>
+  );
+}
