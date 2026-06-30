@@ -1,7 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, Users, Landmark, UserCheck, Briefcase, GraduationCap } from 'lucide-react';
+import { Shield, Users, Landmark, UserCheck, Briefcase, GraduationCap, LogOut, User } from 'lucide-react';
+
 
 const roles = [
   {
@@ -55,10 +58,67 @@ const roles = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const loggedIn = localStorage.getItem('perms_logged_in');
+    if (!loggedIn) {
+      router.push('/login');
+    } else {
+      setUser({
+        name: localStorage.getItem('perms_user_name') || 'Rahul Sharma',
+        email: localStorage.getItem('perms_user_email') || 'sec_csea@nitc.ac.in',
+      });
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('perms_logged_in');
+    localStorage.removeItem('perms_user_name');
+    localStorage.removeItem('perms_user_email');
+    router.push('/login');
+  };
+
+  if (!mounted || !user) {
+    return (
+      <div className="min-h-screen bg-[#fcf0e3] flex items-center justify-center">
+        <div className="animate-pulse text-[#7a1f32] font-semibold">Verifying authorization...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#fcf0e3] flex flex-col justify-between">
+      {/* Top Bar with user info & logout */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-[#e9ccbf] py-3.5 px-6">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <span className="text-sm font-bold text-[#7a1f32] tracking-wider uppercase">PermsPortal</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-[#fcf0e3] px-3.5 py-1.5 rounded-full border border-[#e9ccbf]">
+              <div className="w-5 h-5 rounded-full bg-[#7a1f32] flex items-center justify-center text-white text-[10px] font-bold">
+                {user.name.charAt(0)}
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-[#2d2a29] leading-none">{user.name}</p>
+                <p className="text-[10px] text-[#8d6e63] leading-none mt-0.5">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100/70 px-3 py-1.5 rounded-lg border border-red-200 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <header className="py-12 px-6 text-center max-w-4xl mx-auto space-y-4">
+      <header className="py-10 px-6 text-center max-w-4xl mx-auto space-y-4">
         <div className="inline-block px-4 py-1.5 bg-[#7a1f32] text-[#fcf0e3] rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
           CSEA Venue Portal
         </div>
