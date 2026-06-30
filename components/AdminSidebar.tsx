@@ -36,8 +36,8 @@ export function AdminSidebar({ activeItem, setActiveItem, isOpen, onClose }: Adm
       {/* Sidebar Drawer */}
       <aside className={cn(
         "bg-[#7a1f32] text-white border-r border-[#5a1725] transition-transform duration-300 ease-in-out",
-        "fixed lg:sticky top-0 left-0 h-full lg:top-[88px] lg:h-[calc(100vh-88px)] w-64 z-50 flex flex-col justify-between",
-        "lg:translate-x-0", // Always visible on desktop
+        "fixed lg:static top-0 left-0 h-full lg:h-full w-64 z-50 flex flex-col justify-between",
+        "lg:translate-x-0", 
         isOpen ? "translate-x-0" : "-translate-x-full" // Toggle translation on mobile
       )}>
         <div>
@@ -83,24 +83,12 @@ export function AdminSidebar({ activeItem, setActiveItem, isOpen, onClose }: Adm
           </nav>
         </div>
 
-        {/* Footer Area with Identity */}
-        <div className="p-4 border-t border-[#5a1725] bg-[#5a1725]/45">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#4b90a1] flex items-center justify-center text-white font-bold shadow-sm">
-              A
-            </div>
-            <div className="flex-grow overflow-hidden">
-              <p className="font-semibold text-sm truncate">Administrator</p>
-              <p className="text-xs text-white/60 truncate">admin@csea.edu</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Dimmed Overlay on Mobile when sidebar drawer is active */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity duration-300"
           onClick={onClose}
         />
       )}

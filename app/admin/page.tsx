@@ -10,16 +10,16 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcf0e3]">
+    <div className="h-screen flex flex-col bg-[#fcf0e3] overflow-hidden">
       <Header onMenuPress={() => setSidebarOpen(true)} />
-      <div className="flex flex-grow flex-1">
+      <div className="flex flex-grow flex-1 overflow-hidden">
         <AdminSidebar 
           activeItem={adminSection} 
           setActiveItem={setAdminSection} 
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 p-4 lg:p-6 transition-all duration-300">
+        <main className="flex-grow overflow-y-auto p-4 lg:p-6 transition-all duration-300">
           <AdminDashboard activeSection={adminSection} />
         </main>
       </div>
