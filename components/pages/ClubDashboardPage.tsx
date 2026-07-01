@@ -20,10 +20,12 @@ const initialBookings: Booking[] = [
   { id: '5', title: 'Alumni Guest Lecture', venue: 'APJ Hall', startDate: '28/03/26 10:00', endDate: '28/03/26 12:30', bookingDate: '15/03/26', status: 'approved', club: 'CSEA' },
 ];
 
+const venuesList = ['SSL Lab', 'NSL Lab', 'Seminar Hall', 'APJ Hall', 'Meeting Room', 'ELHC 402'];
+
 export function ClubDashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   
-  // Form states
+  // Form/Selection states
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('SSL Lab');
   const [startDateTime, setStartDateTime] = useState('');
@@ -52,7 +54,6 @@ export function ClubDashboardPage() {
     
     // Clear inputs
     setEventName('');
-    setVenue('SSL Lab');
     setStartDateTime('');
     setEndDateTime('');
     setDescription('');
@@ -65,50 +66,18 @@ export function ClubDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-[#7a1f32]">Welcome, Club Secretary</h1>
-        <p className="text-sm text-gray-500">Review and manage your booking requests</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 lg:col-span-2">
-          <h2 className="text-base font-semibold text-[#4b90a1] mb-4 pb-2 border-b border-gray-100">New booking request</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-            <Input label="Event name" value={eventName} onChange={(e) => setEventName((e.target as HTMLInputElement).value)} />
-            <Select
-              label="Venue"
-              selectedKey={venue}
-              onSelectionChange={(key) => setVenue(String(key))}
-              options={[
-                { id: 'SSL Lab', label: 'SSL Lab' },
-                { id: 'NSL Lab', label: 'NSL Lab' },
-                { id: 'Seminar Hall', label: 'Seminar Hall' },
-                { id: 'APJ Hall', label: 'APJ Hall' },
-                { id: 'Meeting Room', label: 'Meeting Room' },
-                { id: 'ELHC 402', label: 'ELHC 402' },
-              ]}
-              className="w-full"
-            />
-            <Input label="Start date & time" type="datetime-local" value={startDateTime} onChange={(e) => setStartDateTime((e.target as HTMLInputElement).value)} />
-            <Input label="End date & time" type="datetime-local" value={endDateTime} onChange={(e) => setEndDateTime((e.target as HTMLInputElement).value)} />
-            <div className="md:col-span-2">
-              <TextArea label="Description" value={description} onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)} />
-            </div>
-            <div className="md:col-span-2 flex justify-end mt-2">
-              <Button variant="primary" onPress={handleSubmit}>Submit Request</Button>
-            </div>
-          </div>
-        </Card>
-
-        <div className="flex flex-col gap-4">
-          <StatCard title="Approved requests" value={String(approvedCount)} />
-          <StatCard title="Pending requests" value={String(pendingCount)} />
-          <StatCard title="Rejected requests" value={String(rejectedCount)} variant="danger" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#7a1f32]">Welcome, Club Secretary</h1>
+          <p className="text-sm text-gray-500">Review and manage your booking requests</p>
         </div>
       </div>
 
-      {/* Availability Grid */}
-      <AvailabilityGrid />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard title="Pending requests" value={String(pendingCount)} />
+        <StatCard title="Approved requests" value={String(approvedCount)} />
+        <StatCard title="Rejected requests" value={String(rejectedCount)} variant="danger" />
+      </div>
 
       {/* My Bookings list */}
       <Card className="p-6">
@@ -188,6 +157,52 @@ export function ClubDashboardPage() {
           </TabPanelComponent>
         </Tabs>
       </Card>
+
+      <Card className="p-6">
+        <h2 className="text-base font-semibold text-[#4b90a1] mb-4 pb-2 border-b border-gray-100">New booking request</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <Input label="Event name" value={eventName} onChange={(e) => setEventName((e.target as HTMLInputElement).value)} />
+          <Select
+            label="Venue"
+            selectedKey={venue}
+            onSelectionChange={(key) => setVenue(String(key))}
+            options={venuesList.map(v => ({ id: v, label: v }))}
+            className="w-full"
+          />
+          <Input label="Start date & time" type="datetime-local" value={startDateTime} onChange={(e) => setStartDateTime((e.target as HTMLInputElement).value)} />
+          <Input label="End date & time" type="datetime-local" value={endDateTime} onChange={(e) => setEndDateTime((e.target as HTMLInputElement).value)} />
+          <div className="md:col-span-2">
+            <TextArea label="Description" value={description} onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)} />
+          </div>
+          <div className="md:col-span-2 flex justify-end mt-2">
+            <Button variant="primary" onPress={handleSubmit}>Submit Request</Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Venue Selection & Availability Calendar */}
+      <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-[#e9ccbf]/40 space-y-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-bold text-[#7a1f32]">Select Venue</h2>
+          <p className="text-xs text-gray-500">Click a venue below to view its availability calendar and load it in the booking form</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {venuesList.map((v) => (
+            <Button
+              key={v}
+              variant={venue === v ? 'primary' : 'outline'}
+              onPress={() => setVenue(v)}
+              size="sm"
+            >
+              {v}
+            </Button>
+          ))}
+        </div>
+        <AvailabilityGrid selectedVenue={venue} />
+      </div>
+
+      
+      
     </div>
   );
 }

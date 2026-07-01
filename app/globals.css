@@ -31,3 +31,35 @@ body {
   font-family: var(--font-sans);
   color: var(--color-text);
 }
+
+/* Dialog/Modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes zoomIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes zoomOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+.animate-fade-out {
+  animation: fadeOut 0.15s ease-in forwards;
+}
+.animate-zoom-in {
+  animation: zoomIn 0.2s ease-out forwards;
+}
+.animate-zoom-out {
+  animation: zoomOut 0.15s ease-in forwards;
+}
+
