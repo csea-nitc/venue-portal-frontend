@@ -1,172 +1,249 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/Card';
-import { Table, TableCell, TableRow, StatusBadge } from '@/components/Table';
-import { Plus } from 'lucide-react';
-import { Club } from '@/types';
+import { Table, TableCell, TableRow } from '@/components/Table';
+import { Plus, Loader2, AlertCircle, Trash2, Edit } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components/Input';
 import { Select } from '@/components/Select';
-
-const mockClubs: Club[] = [
-  { id: '1', name: 'IEEE NITC', secretary: 'Arjun Nair', contact: '9004283732', facultyCoordinator: 'VP', status: 'available' },
-  { id: '2', name: 'Music Club', secretary: 'Priya S', contact: '8372901344', facultyCoordinator: 'TMS', status: 'unavailable' },
-  { id: '3', name: 'CSEA', secretary: 'Rahul K', contact: '9637013391', facultyCoordinator: 'VAR', status: 'available' },
-  { id: '4', name: 'AeroUnwired', secretary: 'Manisha', contact: '9003585698', facultyCoordinator: 'NKB', status: 'unavailable' },
-  { id: '5', name: 'GDSC', secretary: 'Aisha S', contact: '7875982911', facultyCoordinator: 'JJ', status: 'available' },
-];
+import { useFetch } from '@/hooks/useFetch';
+import { cn } from '@/lib/utils';
 
 export function AdminClubsPage() {
-  const [clubs, setClubs] = useState<Club[]>(mockClubs);
+  const { data: clubsData, isLoading: isFetching, error: fetchError, sendRequest: fetchClubs } = useFetch();
+  const { isLoading: isSubmitting, error: submitError, sendRequest: saveClub } = useFetch();
+  const { sendRequest: deleteClub } = useFetch();
+  const { data: usersData, sendRequest: fetchUsers } = useFetch();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   // Form states
-  const [name, setName] = useState('');
-  const [secretary, setSecretary] = useState('');
-  const [contact, setContact] = useState('');
-  const [facultyCoordinator, setFacultyCoordinator] = useState('');
-  const [status, setStatus] = useState('available');
+  const [clubName, setClubName] = useState('');
+  const [secretaryName, setSecretaryName] = useState('');
+  const [secretaryEmail, setSecretaryEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [coordinatorId, setCoordinatorId] = useState('');
+
+  useEffect(() => {
+    fetchClubs('/api/clubs');
+    fetchUsers('/api/admin/users');
+  }, [fetchClubs, fetchUsers]);
 
   const handleOpenAdd = () => {
     setEditId(null);
-    setName('');
-    setSecretary('');
-    setContact('');
-    setFacultyCoordinator('');
-    setStatus('available');
+    setClubName('');
+    setSecretaryName('');
+    setSecretaryEmail('');
+    setContactNumber('');
+    setCoordinatorId('');
     setIsOpen(true);
   };
 
-  const handleOpenEdit = (club: Club) => {
-    setEditId(club.id);
-    setName(club.name);
-    setSecretary(club.secretary);
-    setContact(club.contact);
-    setFacultyCoordinator(club.facultyCoordinator);
-    setStatus(club.status);
+  const handleOpenEdit = (club: any) => {
+    setEditId(club.clubId);
+    setClubName(club.clubName);
+    setSecretaryName(club.secretaryName || '');
+    setSecretaryEmail(club.secretaryEmail || '');
+    setContactNumber(club.contactNumber || '');
+    setCoordinatorId(String(club.facultyCoordinatorId));
     setIsOpen(true);
   };
 
-  const handleSave = () => {
-    if (!name || !secretary || !contact || !facultyCoordinator) {
+  const handleSave = async () => {
+    if (!clubName || !secretaryName || !secretaryEmail || !contactNumber || !coordinatorId) {
       alert('Please fill in all required fields.');
       return;
     }
 
-    if (editId) {
-      setClubs(clubs.map(c => c.id === editId ? {
-        id: editId,
-        name,
-        secretary,
-        contact,
-        facultyCoordinator,
-        status: status as any
-      } : c));
-    } else {
-      const newClub: Club = {
-        id: String(Date.now()),
-        name,
-        secretary,
-        contact,
-        facultyCoordinator,
-        status: status as any
+    try {
+      const payload = {
+        clubName,
+        secretaryName,
+        secretaryEmail,
+        contactNumber,
+        facultyCoordinatorId: parseInt(coordinatorId),
       };
-      setClubs([...clubs, newClub]);
+
+      if (editId) {
+        await saveClub(`/api/clubs/${editId}`, {
+          method: 'PUT',
+          body: payload,
+        });
+      } else {
+        await saveClub('/api/clubs', {
+          method: 'POST',
+          body: payload,
+        });
+      }
+      setIsOpen(false);
+      fetchClubs('/api/clubs');
+    } catch (err) {
+      console.error('Save club failed:', err);
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this club?')) {
-      setClubs(clubs.filter(c => c.id !== id));
+      try {
+        await deleteClub(`/api/clubs/${id}`, { method: 'DELETE' });
+        fetchClubs('/api/clubs');
+      } catch (err) {
+        console.error('Delete club failed:', err);
+      }
     }
   };
 
-  const totalClubs = clubs.length;
-  const activeCount = clubs.filter(c => c.status === 'available').length;
-  const inactiveCount = clubs.filter(c => c.status === 'unavailable').length;
+  const clubs = clubsData?.data || clubsData?.clubs || [];
+  const stats = {
+    total: clubs.length,
+    active: clubs.filter((c: any) => c.isActive !== false).length,
+  };
+
+  // Filter institutional users for coordinator selection (non-club, non-admin, e.g. faculties/staffs)
+  const facultyUsers = (usersData?.users || []).filter((u: any) => 
+    u.role === 'FACULTY_COORDINATOR' || 
+    u.role === 'FACULTY_IN_CHARGE' || 
+    u.role === 'HOD' || 
+    u.role === 'STAFF_IN_CHARGE'
+  );
+
+  const facultyOptions = facultyUsers.map((u: any) => ({
+    id: String(u.userId),
+    label: `${u.name} (${u.role.replace(/_/g, ' ')})`
+  }));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Club Registry</h1>
-          <p className="text-xs text-gray-500">Manage recognized student clubs, secretaries, and coordinators</p>
+          <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
         </div>
-        <Button variant="outline" size="sm" onPress={handleOpenAdd}>
-          <Plus className="w-4 h-4 inline mr-1" /> Add New
+        <Button variant="primary" size="sm" onPress={handleOpenAdd}>
+          <Plus className="w-4 h-4 inline mr-1" /> Add Club
         </Button>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <StatCard title="Total Clubs" value={String(totalClubs)} />
-        <StatCard title="Active" value={String(activeCount)} />
-        <StatCard title="Inactive" value={String(inactiveCount)} variant="danger" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard title="Total Clubs" value={stats.total.toString()} />
+        <StatCard title="Active Registry" value={stats.active.toString()} />
       </div>
 
-      <Table headers={['Club name', 'Secretary', 'Contact', 'Faculty Coordinator', 'Status', 'Actions']}>
-        {clubs.map((club) => (
-          <TableRow key={club.id}>
-            <TableCell className="font-semibold text-gray-800">{club.name}</TableCell>
-            <TableCell>{club.secretary}</TableCell>
-            <TableCell>{club.contact}</TableCell>
-            <TableCell>{club.facultyCoordinator}</TableCell>
-            <TableCell><StatusBadge status={club.status} /></TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onPress={() => handleOpenEdit(club)}>Edit</Button>
-                <Button size="sm" variant="danger" onPress={() => handleDelete(club.id)}>Delete</Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </Table>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {isFetching ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-[#4b90a1]" />
+          </div>
+        ) : fetchError ? (
+          <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
+            <AlertCircle className="w-10 h-10" />
+            <p>{fetchError}</p>
+            <Button variant="outline" size="sm" onPress={() => fetchClubs('/api/clubs')}>Retry</Button>
+          </div>
+        ) : (
+          <Table headers={['Club Name', 'Secretary', 'Contact', 'Coordinator', 'Status', 'Actions']}>
+            {clubs.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-center py-8 text-gray-500 italic">No clubs found</TableCell>
+                <TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell>
+              </TableRow>
+            ) : (
+              clubs.map((club: any) => (
+                <TableRow key={club.clubId}>
+                  <TableCell className="font-bold text-gray-800">{club.clubName}</TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-medium text-gray-700">{club.secretaryName}</div>
+                    <div className="text-xs text-gray-400">{club.secretaryEmail}</div>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">{club.contactNumber}</TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-medium text-gray-700">{club.coordinator?.name || 'Unknown'}</div>
+                    <div className="text-xs text-gray-400">ID: {club.facultyCoordinatorId}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                      club.isActive !== false 
+                        ? "bg-green-50 text-green-700 border-green-200" 
+                        : "bg-gray-50 text-gray-500 border-gray-200"
+                    )}>
+                      {club.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onPress={() => handleOpenEdit(club)}>
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="danger" onPress={() => handleDelete(club.clubId)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </Table>
+        )}
+      </div>
 
       <Modal
         isOpen={isOpen}
         onOpenChange={setIsOpen}
-        title={editId ? 'Edit Club' : 'Register New Club'}
+        title={editId ? 'Edit Club' : 'Add New Club'}
       >
-        <div className="space-y-4">
-          <Input
-            label="Club Name"
-            value={name}
-            onChange={(e) => setName((e.target as HTMLInputElement).value)}
+        <div className="space-y-4 p-1">
+          {submitError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+          <Input 
+            label="Club Name" 
+            value={clubName}
+            onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
             placeholder="e.g. CSEA"
           />
-          <Input
-            label="Secretary Name"
-            value={secretary}
-            onChange={(e) => setSecretary((e.target as HTMLInputElement).value)}
-            placeholder="e.g. Rahul K"
+          <Input 
+            label="Secretary Name" 
+            value={secretaryName}
+            onChange={(e) => setSecretaryName((e.target as HTMLInputElement).value)}
+            placeholder="e.g. John Doe"
           />
-          <Input
-            label="Contact Number"
-            value={contact}
-            onChange={(e) => setContact((e.target as HTMLInputElement).value)}
-            placeholder="e.g. 9637013391"
+          <Input 
+            label="Secretary Email" 
+            type="email"
+            value={secretaryEmail}
+            onChange={(e) => setSecretaryEmail((e.target as HTMLInputElement).value)}
+            placeholder="e.g. secretary@nitc.ac.in"
           />
-          <Input
-            label="Faculty Coordinator"
-            value={facultyCoordinator}
-            onChange={(e) => setFacultyCoordinator((e.target as HTMLInputElement).value)}
-            placeholder="e.g. VAR"
+          <Input 
+            label="Contact Number" 
+            value={contactNumber}
+            onChange={(e) => setContactNumber((e.target as HTMLInputElement).value)}
+            placeholder="10-digit mobile number"
           />
-          <Select
-            label="Status"
-            selectedKey={status}
-            onSelectionChange={(key) => setStatus(String(key))}
-            options={[
-              { id: 'available', label: 'Active' },
-              { id: 'unavailable', label: 'Inactive' }
-            ]}
+          
+          <Select 
+            label="Faculty Coordinator" 
+            selectedKey={coordinatorId}
+            onSelectionChange={(key) => setCoordinatorId(key)}
+            options={facultyOptions}
+            placeholder="Select faculty coordinator"
           />
-          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
-            <Button variant="outline" onPress={() => setIsOpen(false)}>Cancel</Button>
-            <Button variant="primary" onPress={handleSave}>Save</Button>
+
+          <div className="flex gap-3 pt-4">
+            <Button variant="primary" className="flex-1" onPress={handleSave} isDisabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editId ? 'Update Club' : 'Create Club'}
+            </Button>
+            <Button variant="outline" className="flex-1" onPress={() => setIsOpen(false)}>
+              Cancel
+            </Button>
           </div>
         </div>
       </Modal>

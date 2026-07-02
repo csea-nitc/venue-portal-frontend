@@ -1,191 +1,234 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/Card';
-import { Table, TableCell, TableRow, StatusBadge, RoleBadge } from '@/components/Table';
-import { Plus } from 'lucide-react';
-import { Venue } from '@/types';
+import { Table, TableCell, TableRow } from '@/components/Table';
+import { Plus, Loader2, AlertCircle, Trash2, Edit } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components/Input';
 import { Select } from '@/components/Select';
-
-const mockVenues: Venue[] = [
-  { id: '1', name: 'Seminar Hall', type: 'hall', location: 'Main Building', capacity: 100, staffIncharge: 'VP', status: 'available' },
-  { id: '2', name: 'APJ Hall', type: 'hall', location: 'CSE Building', capacity: 40, staffIncharge: 'TMS', status: 'unavailable' },
-  { id: '3', name: 'SSL/ NSL', type: 'lab', location: 'ITL Complex', capacity: 50, staffIncharge: 'VAR', status: 'available' },
-  { id: '4', name: 'ELHC 402', type: 'classroom', location: 'ELHC', capacity: 100, staffIncharge: 'NKB', status: 'unavailable' },
-  { id: '5', name: 'MB 205', type: 'hall', location: 'Main Building', capacity: 100, staffIncharge: 'JJ', status: 'available' },
-];
+import { useFetch } from '@/hooks/useFetch';
+import { cn } from '@/lib/utils';
 
 export function AdminVenuesPage() {
-  const [venues, setVenues] = useState<Venue[]>(mockVenues);
+  const { data: venuesData, isLoading: isFetching, error: fetchError, sendRequest: fetchVenues } = useFetch();
+  const { isLoading: isSubmitting, sendRequest: saveVenue } = useFetch();
+  const { sendRequest: deleteVenue } = useFetch();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   // Form states
   const [name, setName] = useState('');
-  const [type, setType] = useState('hall');
+  const [venueType, setVenueType] = useState('HALL');
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
-  const [staffIncharge, setStaffIncharge] = useState('');
-  const [status, setStatus] = useState('available');
+  const [isAvailable, setIsAvailable] = useState(true);
+
+  useEffect(() => {
+    fetchVenues('/api/admin/venues');
+  }, [fetchVenues]);
 
   const handleOpenAdd = () => {
     setEditId(null);
     setName('');
-    setType('hall');
+    setVenueType('HALL');
     setLocation('');
     setCapacity('');
-    setStaffIncharge('');
-    setStatus('available');
+    setIsAvailable(true);
     setIsOpen(true);
   };
 
-  const handleOpenEdit = (venue: Venue) => {
-    setEditId(venue.id);
+  const handleOpenEdit = (venue: any) => {
+    setEditId(venue.venueId);
     setName(venue.name);
-    setType(venue.type);
+    setVenueType(venue.venueType);
     setLocation(venue.location);
     setCapacity(String(venue.capacity));
-    setStaffIncharge(venue.staffIncharge);
-    setStatus(venue.status);
+    setIsAvailable(venue.isAvailable);
     setIsOpen(true);
   };
 
-  const handleSave = () => {
-    if (!name || !location || !capacity || !staffIncharge) {
+  const handleSave = async () => {
+    if (!name || !location || !capacity) {
       alert('Please fill in all required fields.');
       return;
     }
 
-    if (editId) {
-      // Edit mode
-      setVenues(venues.map(v => v.id === editId ? {
-        id: editId,
+    try {
+      const payload = {
         name,
-        type: type as any,
+        venueType,
         location,
         capacity: parseInt(capacity) || 0,
-        staffIncharge,
-        status: status as any
-      } : v));
-    } else {
-      // Add mode
-      const newVenue: Venue = {
-        id: String(Date.now()),
-        name,
-        type: type as any,
-        location,
-        capacity: parseInt(capacity) || 0,
-        staffIncharge,
-        status: status as any
+        isAvailable,
       };
-      setVenues([...venues, newVenue]);
+
+      if (editId) {
+        await saveVenue(`/api/admin/venues/${editId}`, {
+          method: 'PUT',
+          body: payload,
+        });
+      } else {
+        await saveVenue('/api/admin/venues', {
+          method: 'POST',
+          body: payload,
+        });
+      }
+      setIsOpen(false);
+      fetchVenues('/api/admin/venues');
+    } catch (err) {
+      console.error('Save venue failed:', err);
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this venue?')) {
-      setVenues(venues.filter(v => v.id !== id));
+      try {
+        await deleteVenue(`/api/admin/venues/${id}`, { method: 'DELETE' });
+        fetchVenues('/api/admin/venues');
+      } catch (err) {
+        console.error('Delete venue failed:', err);
+      }
     }
   };
 
-  const totalVenues = venues.length;
-  const availableCount = venues.filter(v => v.status === 'available').length;
-  const unavailableCount = venues.filter(v => v.status === 'unavailable').length;
+  const venues = venuesData?.venues || [];
+  const stats = {
+    total: venues.length,
+    available: venues.filter((v: any) => v.isAvailable).length,
+    unavailable: venues.filter((v: any) => !v.isAvailable).length,
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Venue Management</h1>
-          <p className="text-xs text-gray-500">Register and manage college halls, labs, and classrooms</p>
+          <p className="text-xs text-gray-500">Configure department halls, labs, and classrooms</p>
         </div>
-        <Button variant="outline" size="sm" onPress={handleOpenAdd}>
-          <Plus className="w-4 h-4 inline mr-1" /> Add New
+        <Button variant="primary" size="sm" onPress={handleOpenAdd}>
+          <Plus className="w-4 h-4 inline mr-1" /> Add Venue
         </Button>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <StatCard title="Total Venues" value={String(totalVenues)} />
-        <StatCard title="Available" value={String(availableCount)} />
-        <StatCard title="Unavailable" value={String(unavailableCount)} variant="danger" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard title="Total Venues" value={stats.total.toString()} />
+        <StatCard title="Available" value={stats.available.toString()} />
+        <StatCard title="Unavailable" value={stats.unavailable.toString()} variant="danger" />
       </div>
 
-      <Table headers={['Name', 'Type', 'Location', 'Capacity', 'Staff Incharge', 'Status', 'Actions']}>
-        {venues.map((venue) => (
-          <TableRow key={venue.id}>
-            <TableCell className="font-semibold text-gray-800">{venue.name}</TableCell>
-            <TableCell><RoleBadge role={venue.type} /></TableCell>
-            <TableCell>{venue.location}</TableCell>
-            <TableCell>{venue.capacity}</TableCell>
-            <TableCell>{venue.staffIncharge}</TableCell>
-            <TableCell><StatusBadge status={venue.status} /></TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onPress={() => handleOpenEdit(venue)}>Edit</Button>
-                <Button size="sm" variant="danger" onPress={() => handleDelete(venue.id)}>Delete</Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </Table>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {isFetching ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-[#4b90a1]" />
+          </div>
+        ) : fetchError ? (
+          <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
+            <AlertCircle className="w-10 h-10" />
+            <p>{fetchError}</p>
+            <Button variant="outline" size="sm" onPress={() => fetchVenues('/api/admin/venues')}>Retry</Button>
+          </div>
+        ) : (
+          <Table headers={['Name', 'Type', 'Location', 'Capacity', 'Status', 'Actions']}>
+            {venues.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-center py-8 text-gray-500 italic">No venues found</TableCell>
+                <TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell>
+              </TableRow>
+            ) : (
+              venues.map((venue: any) => (
+                <TableRow key={venue.venueId}>
+                  <TableCell className="font-bold text-gray-800">{venue.name}</TableCell>
+                  <TableCell>
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">
+                      {venue.venueType}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-sm">{venue.location}</TableCell>
+                  <TableCell className="text-sm font-medium">{venue.capacity}</TableCell>
+                  <TableCell>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                      venue.isAvailable ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"
+                    )}>
+                      {venue.isAvailable ? 'AVAILABLE' : 'MAINTENANCE'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onPress={() => handleOpenEdit(venue)}>
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="danger" onPress={() => handleDelete(venue.venueId)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </Table>
+        )}
+      </div>
 
       <Modal
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         title={editId ? 'Edit Venue' : 'Add New Venue'}
       >
-        <div className="space-y-4">
-          <Input
-            label="Venue Name"
+        <div className="space-y-4 p-1">
+          <Input 
+            label="Venue Name" 
             value={name}
             onChange={(e) => setName((e.target as HTMLInputElement).value)}
-            placeholder="e.g. Seminar Hall"
+            placeholder="e.g. APJ Hall"
           />
           <Select
             label="Venue Type"
-            selectedKey={type}
-            onSelectionChange={(key) => setType(String(key))}
+            selectedKey={venueType}
+            onSelectionChange={(key) => setVenueType(key as string)}
             options={[
-              { id: 'hall', label: 'Hall' },
-              { id: 'lab', label: 'Lab' },
-              { id: 'classroom', label: 'Classroom' }
+              { id: 'HALL', label: 'Hall' },
+              { id: 'LAB', label: 'Lab' },
+              { id: 'CLASSROOM', label: 'Classroom' },
             ]}
           />
-          <Input
-            label="Location"
+          <Input 
+            label="Location" 
             value={location}
             onChange={(e) => setLocation((e.target as HTMLInputElement).value)}
-            placeholder="e.g. CSE Block"
+            placeholder="Building, Floor"
           />
-          <Input
-            label="Capacity"
+          <Input 
+            label="Capacity" 
             type="number"
             value={capacity}
             onChange={(e) => setCapacity((e.target as HTMLInputElement).value)}
-            placeholder="e.g. 100"
+            placeholder="Number of seats"
           />
-          <Input
-            label="Staff In-charge"
-            value={staffIncharge}
-            onChange={(e) => setStaffIncharge((e.target as HTMLInputElement).value)}
-            placeholder="e.g. VP / TMS"
-          />
-          <Select
-            label="Status"
-            selectedKey={status}
-            onSelectionChange={(key) => setStatus(String(key))}
-            options={[
-              { id: 'available', label: 'Available' },
-              { id: 'unavailable', label: 'Unavailable' }
-            ]}
-          />
-          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
-            <Button variant="outline" onPress={() => setIsOpen(false)}>Cancel</Button>
-            <Button variant="primary" onPress={handleSave}>Save</Button>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="isAvailable"
+              checked={isAvailable}
+              onChange={(e) => setIsAvailable(e.target.checked)}
+              className="w-4 h-4 text-[#4b90a1] rounded focus:ring-[#4b90a1]"
+            />
+            <label htmlFor="isAvailable" className="text-sm font-medium text-gray-700 cursor-pointer">
+              Venue is available for booking
+            </label>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button variant="primary" className="flex-1" onPress={handleSave} isDisabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editId ? 'Update Venue' : 'Create Venue'}
+            </Button>
+            <Button variant="outline" className="flex-1" onPress={() => setIsOpen(false)}>
+              Cancel
+            </Button>
           </div>
         </div>
       </Modal>

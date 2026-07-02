@@ -28,7 +28,7 @@ export function Select({
 }: SelectProps) {
   return (
     <AriaSelect
-      selectedKey={selectedKey}
+      selectedKey={selectedKey || undefined}
       onSelectionChange={(key) => onSelectionChange?.(key as string)}
       className={cn('flex flex-col gap-1.5 w-full', className)}
       placeholder={placeholder}
@@ -57,6 +57,7 @@ export function Select({
         <ListBox className="outline-none p-1">
           {options.map((opt) => (
             <ListBoxItem
+              id={opt.id}
               key={opt.id}
               textValue={opt.label}
               className={({ isFocused, isSelected, isHovered }) => cn(

@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { ModalOverlay, Modal as AriaModal, Dialog } from 'react-aria-components';
+import { ModalOverlay, Modal as AriaModal, Dialog, Heading } from 'react-aria-components';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from './Button';
@@ -37,7 +37,7 @@ export function Modal({ isOpen, onOpenChange, title, children, className }: Moda
           {({ close }) => (
             <>
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-[#7a1f32]">{title}</h3>
+                <Heading slot="title" className="text-lg font-bold text-[#7a1f32]">{title}</Heading>
                 <Button
                   variant="outline"
                   size="sm"

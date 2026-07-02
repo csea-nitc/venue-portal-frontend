@@ -11,7 +11,7 @@ type TabsProps = {
 };
 
 export function Tabs({ tabs, children, defaultTab }: TabsProps) {
-  const [selectedKey, setSelectedKey] = useState<React.Key>(defaultTab || tabs[0].id);
+  const [selectedKey, setSelectedKey] = useState<any>(defaultTab || tabs[0].id);
 
   return (
     <AriaTabs
