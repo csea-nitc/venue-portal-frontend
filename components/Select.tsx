@@ -28,7 +28,7 @@ export function Select({
 }: SelectProps) {
   return (
     <AriaSelect
-      selectedKey={selectedKey}
+      selectedKey={selectedKey || undefined}
       onSelectionChange={(key) => onSelectionChange?.(key as string)}
       className={cn('flex flex-col gap-1.5 w-full', className)}
       placeholder={placeholder}
@@ -50,16 +50,20 @@ export function Select({
         <ChevronDown className="w-4 h-4 text-gray-500" />
       </Button>
 
-      <Popover className="z-50 w-[--trigger-width] bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden transition-all">
+      <Popover 
+        style={{ width: 'var(--trigger-width)' }}
+        className="z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden transition-all"
+      >
         <ListBox className="outline-none p-1">
           {options.map((opt) => (
             <ListBoxItem
+              id={opt.id}
               key={opt.id}
               id={opt.id}
               textValue={opt.label}
-              className={({ isFocused, isSelected }) => cn(
+              className={({ isFocused, isSelected, isHovered }) => cn(
                 'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',
-                isFocused && 'bg-[#f4d9c6]/50 text-[#7a1f32]',
+                (isFocused || isHovered) && 'bg-[#f4d9c6]/50 text-[#7a1f32]',
                 isSelected && 'bg-[#7a1f32] text-white'
               )}
             >

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Tab, TabList, TabPanel, Tabs as AriaTabs } from 'react-aria-components';
 
@@ -10,13 +11,20 @@ type TabsProps = {
 };
 
 export function Tabs({ tabs, children, defaultTab }: TabsProps) {
+  const [selectedKey, setSelectedKey] = useState<any>(defaultTab || tabs[0].id);
+
   return (
-    <AriaTabs defaultSelectedKey={defaultTab || tabs[0].id} className="w-full">
+    <AriaTabs
+      selectedKey={selectedKey}
+      onSelectionChange={setSelectedKey}
+      className="w-full"
+    >
       <TabList className="flex gap-1.5 mb-5 border-b border-gray-100 pb-px">
         {tabs.map((tab) => (
           <Tab
             key={tab.id}
-            className={({ isSelected, isHovered }) =>
+            id={tab.id}
+            className={({ isSelected }) =>
               cn(
                 'px-4 py-2 text-sm font-medium transition-all relative outline-none cursor-pointer',
                 isSelected

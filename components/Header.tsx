@@ -37,10 +37,10 @@ export function Header({ onMenuPress }: HeaderProps) {
         {onMenuPress && (
           <button 
             onClick={onMenuPress}
-            className="lg:hidden p-1.5 hover:bg-white/10 rounded transition-colors focus:outline-none"
+            className="lg:hidden p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none"
             aria-label="Toggle Menu"
           >
-            <Menu className="w-6.5 h-6.5" />
+            <Menu className="w-6 h-6" />
           </button>
         )}
         <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight cursor-pointer" onClick={() => router.push('/')}>

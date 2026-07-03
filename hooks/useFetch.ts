@@ -33,31 +33,59 @@ export function useFetch<T = unknown>() {
 
       try {
         const { method = 'GET', headers, body } = config || {};
+<<<<<<< HEAD
 
         const token = typeof window !== 'undefined' ? localStorage.getItem('perms_token') : null;
 
+=======
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+        const fullUrl = url.startsWith('http') ? url : `${backendUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+
+        const token = typeof window !== 'undefined' ? localStorage.getItem('perms_token') : null;
+        
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
         const fetchOptions: RequestInit = {
           method,
           headers: {
             'Content-Type': 'application/json',
+<<<<<<< HEAD
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
+=======
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
             ...headers,
           },
           body: body !== undefined ? JSON.stringify(body) : null,
         };
 
+<<<<<<< HEAD
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
         const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
 
         const response = await fetch(fullUrl, fetchOptions);
 
         let responseData: { message?: string; error?: string } | null = null;
+=======
+        const response = await fetch(fullUrl, fetchOptions);
+        
+        // Handle empty responses
+        let responseData = null;
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           responseData = await response.json();
         }
 
+        if (response.status === 401 && typeof window !== 'undefined') {
+          // Token expired or invalid
+          localStorage.removeItem('perms_token');
+          localStorage.removeItem('perms_logged_in');
+          window.location.href = '/login?error=Session expired. Please login again.';
+          return;
+        }
+
         if (!response.ok) {
+<<<<<<< HEAD
           if (response.status === 401 && typeof window !== 'undefined') {
             localStorage.removeItem('perms_logged_in');
             localStorage.removeItem('perms_token');
@@ -70,6 +98,20 @@ export function useFetch<T = unknown>() {
             responseData?.message ||
             responseData?.error ||
             `Request failed with status ${response.status}`
+=======
+          let errorMessage = responseData?.message || responseData?.error;
+          if (responseData?.details && Array.isArray(responseData.details)) {
+            const detailsStr = responseData.details
+              .map((d: any) => {
+                const field = d.path ? d.path.filter((p: any) => p !== 'body' && p !== 'params' && p !== 'query').join('.') : '';
+                return `${field ? field + ': ' : ''}${d.message}`;
+              })
+              .join(', ');
+            errorMessage = errorMessage ? `${errorMessage} ${detailsStr}` : detailsStr;
+          }
+          throw new Error(
+            errorMessage || `Request failed with status ${response.status}`
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
           );
         }
 

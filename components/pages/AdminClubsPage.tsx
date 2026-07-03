@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/Card';
@@ -34,19 +35,136 @@ export function AdminClubsPage() {
 
   const activeCount = clubs.length; // Assuming all returned are active
   const totalCount = clubs.length;
+=======
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/Button';
+import { StatCard } from '@/components/Card';
+import { Table, TableCell, TableRow } from '@/components/Table';
+import { Plus, Loader2, AlertCircle, Trash2, Edit } from 'lucide-react';
+import { Modal } from '@/components/Modal';
+import { Input } from '@/components/Input';
+import { Select } from '@/components/Select';
+import { useFetch } from '@/hooks/useFetch';
+import { cn } from '@/lib/utils';
+
+export function AdminClubsPage() {
+  const { data: clubsData, isLoading: isFetching, error: fetchError, sendRequest: fetchClubs } = useFetch();
+  const { isLoading: isSubmitting, error: submitError, sendRequest: saveClub } = useFetch();
+  const { sendRequest: deleteClub } = useFetch();
+  const { data: usersData, sendRequest: fetchUsers } = useFetch();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+
+  // Form states
+  const [clubName, setClubName] = useState('');
+  const [secretaryName, setSecretaryName] = useState('');
+  const [secretaryEmail, setSecretaryEmail] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [coordinatorId, setCoordinatorId] = useState('');
+
+  useEffect(() => {
+    fetchClubs('/api/clubs');
+    fetchUsers('/api/admin/users');
+  }, [fetchClubs, fetchUsers]);
+
+  const handleOpenAdd = () => {
+    setEditId(null);
+    setClubName('');
+    setSecretaryName('');
+    setSecretaryEmail('');
+    setContactNumber('');
+    setCoordinatorId('');
+    setIsOpen(true);
+  };
+
+  const handleOpenEdit = (club: any) => {
+    setEditId(club.clubId);
+    setClubName(club.clubName);
+    setSecretaryName(club.secretaryName || '');
+    setSecretaryEmail(club.secretaryEmail || '');
+    setContactNumber(club.contactNumber || '');
+    setCoordinatorId(String(club.facultyCoordinatorId));
+    setIsOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!clubName || !secretaryName || !secretaryEmail || !contactNumber || !coordinatorId) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      const payload = {
+        clubName,
+        secretaryName,
+        secretaryEmail,
+        contactNumber,
+        facultyCoordinatorId: parseInt(coordinatorId),
+      };
+
+      if (editId) {
+        await saveClub(`/api/clubs/${editId}`, {
+          method: 'PUT',
+          body: payload,
+        });
+      } else {
+        await saveClub('/api/clubs', {
+          method: 'POST',
+          body: payload,
+        });
+      }
+      setIsOpen(false);
+      fetchClubs('/api/clubs');
+    } catch (err) {
+      console.error('Save club failed:', err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this club?')) {
+      try {
+        await deleteClub(`/api/clubs/${id}`, { method: 'DELETE' });
+        fetchClubs('/api/clubs');
+      } catch (err) {
+        console.error('Delete club failed:', err);
+      }
+    }
+  };
+
+  const clubs = clubsData?.data || clubsData?.clubs || [];
+  const stats = {
+    total: clubs.length,
+    active: clubs.filter((c: any) => c.isActive !== false).length,
+  };
+
+  // Filter institutional users for coordinator selection (non-club, non-admin, e.g. faculties/staffs)
+  const facultyUsers = (usersData?.users || []).filter((u: any) => 
+    u.role === 'FACULTY_COORDINATOR' || 
+    u.role === 'FACULTY_IN_CHARGE' || 
+    u.role === 'HOD' || 
+    u.role === 'STAFF_IN_CHARGE'
+  );
+
+  const facultyOptions = facultyUsers.map((u: any) => ({
+    id: String(u.userId),
+    label: `${u.name} (${u.role.replace(/_/g, ' ')})`
+  }));
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Club Registry</h1>
-          <p className="text-xs text-gray-500">Manage recognized student clubs, secretaries, and coordinators</p>
+          <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
         </div>
-        <Button variant="outline" size="sm">
-          <Plus className="w-4 h-4 inline mr-1" /> Add New
+        <Button variant="primary" size="sm" onPress={handleOpenAdd}>
+          <Plus className="w-4 h-4 inline mr-1" /> Add Club
         </Button>
       </div>
 
+<<<<<<< HEAD
       <div className="flex gap-4 flex-wrap">
         <StatCard title="Total Clubs" value={totalCount.toString()} />
         <StatCard title="Active" value={activeCount.toString()} />
@@ -79,6 +197,128 @@ export function AdminClubsPage() {
           })}
         </Table>
       )}
+=======
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard title="Total Clubs" value={stats.total.toString()} />
+        <StatCard title="Active Registry" value={stats.active.toString()} />
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {isFetching ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-[#4b90a1]" />
+          </div>
+        ) : fetchError ? (
+          <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
+            <AlertCircle className="w-10 h-10" />
+            <p>{fetchError}</p>
+            <Button variant="outline" size="sm" onPress={() => fetchClubs('/api/clubs')}>Retry</Button>
+          </div>
+        ) : (
+          <Table headers={['Club Name', 'Secretary', 'Contact', 'Coordinator', 'Status', 'Actions']}>
+            {clubs.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-center py-8 text-gray-500 italic">No clubs found</TableCell>
+                <TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell><TableCell>-</TableCell>
+              </TableRow>
+            ) : (
+              clubs.map((club: any) => (
+                <TableRow key={club.clubId}>
+                  <TableCell className="font-bold text-gray-800">{club.clubName}</TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-medium text-gray-700">{club.secretaryName}</div>
+                    <div className="text-xs text-gray-400">{club.secretaryEmail}</div>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">{club.contactNumber}</TableCell>
+                  <TableCell className="text-sm">
+                    <div className="font-medium text-gray-700">{club.coordinator?.name || 'Unknown'}</div>
+                    <div className="text-xs text-gray-400">ID: {club.facultyCoordinatorId}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                      club.isActive !== false 
+                        ? "bg-green-50 text-green-700 border-green-200" 
+                        : "bg-gray-50 text-gray-500 border-gray-200"
+                    )}>
+                      {club.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onPress={() => handleOpenEdit(club)}>
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="sm" variant="danger" onPress={() => handleDelete(club.clubId)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </Table>
+        )}
+      </div>
+
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        title={editId ? 'Edit Club' : 'Add New Club'}
+      >
+        <div className="space-y-4 p-1">
+          {submitError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+          <Input 
+            label="Club Name" 
+            value={clubName}
+            onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
+            placeholder="e.g. CSEA"
+          />
+          <Input 
+            label="Secretary Name" 
+            value={secretaryName}
+            onChange={(e) => setSecretaryName((e.target as HTMLInputElement).value)}
+            placeholder="e.g. John Doe"
+          />
+          <Input 
+            label="Secretary Email" 
+            type="email"
+            value={secretaryEmail}
+            onChange={(e) => setSecretaryEmail((e.target as HTMLInputElement).value)}
+            placeholder="e.g. secretary@nitc.ac.in"
+          />
+          <Input 
+            label="Contact Number" 
+            value={contactNumber}
+            onChange={(e) => setContactNumber((e.target as HTMLInputElement).value)}
+            placeholder="10-digit mobile number"
+          />
+          
+          <Select 
+            label="Faculty Coordinator" 
+            selectedKey={coordinatorId}
+            onSelectionChange={(key) => setCoordinatorId(key)}
+            options={facultyOptions}
+            placeholder="Select faculty coordinator"
+          />
+
+          <div className="flex gap-3 pt-4">
+            <Button variant="primary" className="flex-1" onPress={handleSave} isDisabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editId ? 'Update Club' : 'Create Club'}
+            </Button>
+            <Button variant="outline" className="flex-1" onPress={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+>>>>>>> a279c237d27a365992423eb166b681f472125fab
     </div>
   );
 }
