@@ -55,6 +55,7 @@ export function Select({
           {options.map((opt) => (
             <ListBoxItem
               key={opt.id}
+              id={opt.id}
               textValue={opt.label}
               className={({ isFocused, isSelected }) => cn(
                 'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',

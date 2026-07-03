@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -11,6 +11,7 @@ import { Table, TableCell, TableRow, StatusBadge } from '@/components/Table';
 import { StatCard } from '@/components/Card';
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
 import { Booking } from '@/types';
+import { useFetch } from '@/hooks/useFetch';
 
 const initialBookings: Booking[] = [
   { id: '1', title: 'CSEA Coding Contest', venue: 'SSL Lab', startDate: '22/03/26 17:00', endDate: '22/03/26 20:00', bookingDate: '10/03/26', status: 'approved', club: 'CSEA' },
@@ -22,15 +23,35 @@ const initialBookings: Booking[] = [
 
 export function ClubDashboardPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-  
+  const userId = localStorage.getItem('perms_user_id');
+  const { sendRequest: getBookings, isLoading: isLoadingBookings } = useFetch<Booking[]>();
   // Form states
+  const { sendRequest: addBooking, isLoading: isLoadingAddBooking } = useFetch<Booking>();
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('SSL Lab');
   const [startDateTime, setStartDateTime] = useState('');
   const [endDateTime, setEndDateTime] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = () => {
+
+  //currently userId isn't being stored in local storage, so to get bookings of each person we need to store user id. 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getBookings('/bookings/' + userId);
+        if (res) {
+          setBookings(res);
+        }
+      } catch (e) {
+        alert('Failed to fetch bookings.');
+      }
+    })();
+  }, []);
+
+
+
+
+  const handleSubmit = async () => {
     if (!eventName || !venue || !startDateTime || !endDateTime) {
       alert('Please fill in all required fields.');
       return;
@@ -47,9 +68,18 @@ export function ClubDashboardPage() {
       club: 'CSEA',
       subject: description || 'No description provided'
     };
+    try {
+      await addBooking('/bookings', {
+        method: 'POST',
+        body: newBooking,
+      });
+    } catch (e) {
+      alert('Failed to add booking.');
+      return;
+    }
 
     setBookings([newBooking, ...bookings]);
-    
+
     // Clear inputs
     setEventName('');
     setVenue('SSL Lab');

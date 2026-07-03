@@ -1,20 +1,38 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/Card';
 import { Table, TableCell, TableRow, StatusBadge, RoleBadge } from '@/components/Table';
-import { Plus } from 'lucide-react';
-import { Venue } from '@/types';
+import { Plus, Loader2 } from 'lucide-react';
+import { useFetch } from '@/hooks/useFetch';
 
-const mockVenues: Venue[] = [
-  { id: '1', name: 'Seminar Hall', type: 'hall', location: 'Main Building', capacity: 100, staffIncharge: 'VP', status: 'available' },
-  { id: '2', name: 'APJ Hall', type: 'hall', location: 'CSE Building', capacity: 40, staffIncharge: 'TMS', status: 'unavailable' },
-  { id: '3', name: 'SSL/ NSL', type: 'lab', location: 'ITL Complex', capacity: 50, staffIncharge: 'VAR', status: 'available' },
-  { id: '4', name: 'ELHC 402', type: 'classroom', location: 'ELHC', capacity: 100, staffIncharge: 'NKB', status: 'unavailable' },
-  { id: '5', name: 'MB 205', type: 'hall', location: 'Main Building', capacity: 100, staffIncharge: 'JJ', status: 'available' },
-];
+type AdminVenue = Record<string, unknown> & {
+  venueId?: string | number;
+  name?: string;
+  venueType?: string;
+  location?: string;
+  capacity?: number;
+  handlers?: Array<{ user?: { name?: string } }>;
+};
 
 export function AdminVenuesPage() {
+  const { sendRequest, isLoading } = useFetch<{ venues?: AdminVenue[] }>();
+  const [venues, setVenues] = useState<AdminVenue[]>([]);
+
+  useEffect(() => {
+    sendRequest('/admin/venues')
+      .then(res => {
+        if (res && res.venues) {
+          setVenues(res.venues);
+        }
+      })
+      .catch(console.error);
+  }, [sendRequest]);
+
+  const availableCount = venues.length; // From getAvailableVenues, all are available
+  const totalCount = venues.length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -28,29 +46,38 @@ export function AdminVenuesPage() {
       </div>
 
       <div className="flex gap-4 flex-wrap">
-        <StatCard title="Total Venues" value="12" />
-        <StatCard title="Available" value="8" />
-        <StatCard title="Unavailable" value="12" variant="danger" />
+        <StatCard title="Total Venues" value={totalCount.toString()} />
+        <StatCard title="Available" value={availableCount.toString()} />
+        <StatCard title="Unavailable" value="0" variant="danger" />
       </div>
 
-      <Table headers={['Name', 'Type', 'Location', 'Capacity', 'Staff Incharge', 'Status', 'Actions']}>
-        {mockVenues.map((venue) => (
-          <TableRow key={venue.id}>
-            <TableCell className="font-semibold text-gray-800">{venue.name}</TableCell>
-            <TableCell><RoleBadge role={venue.type} /></TableCell>
-            <TableCell>{venue.location}</TableCell>
-            <TableCell>{venue.capacity}</TableCell>
-            <TableCell>{venue.staffIncharge}</TableCell>
-            <TableCell><StatusBadge status={venue.status} /></TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">Edit</Button>
-                <Button size="sm" variant="danger">Delete</Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </Table>
+      {isLoading ? (
+        <div className="flex justify-center p-8">
+          <Loader2 className="w-8 h-8 animate-spin text-[#7a1f32]" />
+        </div>
+      ) : (
+        <Table headers={['Name', 'Type', 'Location', 'Capacity', 'Staff Incharge', 'Status', 'Actions']}>
+          {venues.map((venue) => {
+            const staffName = venue.handlers?.[0]?.user?.name || 'N/A';
+            return (
+              <TableRow key={venue.venueId}>
+                <TableCell className="font-semibold text-gray-800">{venue.name}</TableCell>
+                <TableCell><RoleBadge role={venue.venueType || 'hall'} /></TableCell>
+                <TableCell>{venue.location || 'N/A'}</TableCell>
+                <TableCell>{venue.capacity || 0}</TableCell>
+                <TableCell>{staffName}</TableCell>
+                <TableCell><StatusBadge status="available" /></TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">Edit</Button>
+                    <Button size="sm" variant="danger">Delete</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </Table>
+      )}
     </div>
   );
 }

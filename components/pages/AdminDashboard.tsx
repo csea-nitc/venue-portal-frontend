@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { Card, StatCard } from '@/components/Card';
 import { Table, TableRow, TableCell } from '@/components/Table';
@@ -10,60 +10,105 @@ import { cn } from '@/lib/utils';
 import { AdminVenuesPage } from './AdminVenuesPage';
 import { AdminClubsPage } from './AdminClubsPage';
 import { AdminPeoplePage } from './AdminPeoplePage';
-
-const mockAuditLogs = [
-  {
-    id: '1',
-    userName: 'Dr. Johnson',
-    action: 'Approved request',
-    timestamp: '2024-03-15 10:30',
-    requestId: 'REQ-001',
-  },
-  {
-    id: '2',
-    userName: 'Dr. Smith',
-    action: 'Forwarded request',
-    timestamp: '2024-03-15 09:15',
-    requestId: 'REQ-002',
-    remarks: 'Better suited for cultural events',
-  },
-  {
-    id: '3',
-    userName: 'John Doe (Student)',
-    action: 'Submitted request',
-    timestamp: '2024-03-14 16:45',
-    requestId: 'REQ-001',
-  },
-];
-
-const mockUsers = [
-  { id: '1', name: 'John Doe', email: 'john.doe@csea.edu', role: 'student', status: 'active' },
-  { id: '2', name: 'Jane Smith', email: 'jane.smith@csea.edu', role: 'student', status: 'active' },
-  { id: '3', name: 'Dr. Johnson', email: 'johnson@csea.edu', role: 'faculty', status: 'active' },
-];
+import { useFetch } from '@/hooks/useFetch';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Person } from '@/types';
 
 type AdminDashboardProps = {
   activeSection?: string;
 };
 
+type AdminUser = Record<string, unknown> & {
+  userId?: string | number;
+  name?: string;
+  email?: string;
+  role?: string;
+  isActive?: boolean;
+};
+
+type AuditLog = Record<string, unknown> & {
+  id?: string | number;
+  action?: string;
+  timestamp?: string | number | Date;
+  actor?: { name?: string };
+  booking?: { bookingId?: string | number };
+  remarks?: string;
+};
+
 export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardProps) {
+  const { sendRequest: fetchUsers, isLoading: isLoadingUsers } = useFetch<{ users?: Person[] }>();
+  const { sendRequest: addNewUser, isLoading: isLoadingAddUser } = useFetch<{ users?: Person[] }>();
+  const { sendRequest: fetchLogs, isLoading: isLoadingLogs } = useFetch<{ data?: AuditLog[] }>();
+  const { sendRequest: editUser, isLoading: isLoadingEditUser } = useFetch<{ user?: Person }>();
+  const { sendRequest: deleteUser, isLoading: isLoadingDeleteUser } = useFetch<{ user?: Person }>();
   const [approvalMode, setApprovalMode] = useState<'single' | 'consensus'>('single');
   const [requiredApprovals, setRequiredApprovals] = useState(1);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student' });
-  const [users, setUsers] = useState(mockUsers);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'CLUB' });
+  const [users, setUsers] = useState<Person[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loadError, setLoadError] = useState<{ section: string; message: string } | null>(null);
+
+  useEffect(() => {
+    if (activeSection === 'users') {
+      fetchUsers('/admin/users')
+        .then(res => {
+          if (res && res.users) setUsers(res.users);
+          setLoadError(null);
+        })
+        .catch((err) => setLoadError({ section: activeSection, message: err.message || 'Unable to load users.' }));
+    }
+
+    if (activeSection === 'requests' || activeSection === 'audit') {
+      fetchLogs('/logs')
+        .then(res => {
+          if (res && res.data) setLogs(res.data);
+          setLoadError(null);
+        })
+        .catch((err) => setLoadError({ section: activeSection, message: err.message || 'Unable to load logs.' }));
+    }
+  }, [activeSection, fetchUsers, fetchLogs]);
+
+
+  const handleEditUser = (user: Person) => {
+    try {
+      editUser('/admin/users/' + user.id, {
+        method: 'PUT',
+        body: user,
+      });
+    } catch (e) {
+      setLoadError({ section: activeSection, message: 'Unable to edit user.' });
+      return;
+    }
+    console.log(user);
+  }
+
+  const handleDeleteUser = (user: Person) => {
+    console.log(user);
+  }
 
   const handleAddUser = () => {
     if (!newUser.name || !newUser.email) return;
+    console.log(newUser);
+    try {
+      addNewUser('/admin/users', {
+        method: 'POST',
+        body: newUser,
+      });
+    } catch (e) {
+      setLoadError({ section: activeSection, message: 'Unable to add user.' });
+      return;
+    }
     setUsers(prev => [
       ...prev,
       {
         id: String(prev.length + 1),
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role,
-        status: 'active'
+        role: newUser.role as Person['role'],
+        status: 'available'
       }
     ]);
+
     setNewUser({ name: '', email: '', role: 'student' });
   };
 
@@ -92,9 +137,9 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
-                  <h3 className="font-semibold text-gray-700 mb-2.5">Today's Metrics</h3>
+                  <h3 className="font-semibold text-gray-700 mb-2.5">Today&apos;s Metrics</h3>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span>Requests Today</span>
@@ -110,21 +155,21 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
             </Card>
           </div>
         );
-      
+
       case 'users':
         return (
           <div className="space-y-4">
             <Card className="p-5">
               <h2 className="text-base font-semibold text-gray-800 mb-3">Add New User</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <Input 
-                  label="Full Name" 
+                <Input
+                  label="Full Name"
                   value={newUser.name}
                   onChange={(e) => setNewUser(prev => ({ ...prev, name: (e.target as HTMLInputElement).value }))}
                   placeholder="Enter full name"
                 />
-                <Input 
-                  label="Email" 
+                <Input
+                  label="Email"
                   value={newUser.email}
                   onChange={(e) => setNewUser(prev => ({ ...prev, email: (e.target as HTMLInputElement).value }))}
                   placeholder="institutional@email.edu"
@@ -134,9 +179,12 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
                   selectedKey={newUser.role}
                   onSelectionChange={(key) => setNewUser(prev => ({ ...prev, role: key }))}
                   options={[
-                    { id: 'student', label: 'Student' },
-                    { id: 'faculty', label: 'Faculty' },
-                    { id: 'admin', label: 'Admin' },
+                    { id: 'CLUB', label: 'Club Secretary' },
+                    { id: 'FACULTY_COORDINATOR', label: 'Faculty Coordinator' },
+                    { id: 'STAFF_IN_CHARGE', label: 'Staff Incharge' },
+                    { id: 'FACULTY_IN_CHARGE', label: 'Faculty Incharge' },
+                    { id: 'HOD', label: 'HOD' },
+                    { id: 'ADMIN', label: 'Admin' },
                   ]}
                 />
               </div>
@@ -148,39 +196,45 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
             </Card>
 
             <Card className="p-0 overflow-hidden">
-              <Table headers={['Name', 'Email', 'Role', 'Status', 'Actions']}>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium text-gray-800">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-full text-xs font-semibold border',
-                        user.role === 'student' && 'bg-blue-50 text-blue-700 border-blue-200',
-                        user.role === 'faculty' && 'bg-green-50 text-green-700 border-green-200',
-                        user.role === 'admin' && 'bg-purple-50 text-purple-700 border-purple-200'
-                      )}>
-                        {user.role.toUpperCase()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 text-xs rounded-full font-semibold">
-                        ACTIVE
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Edit</Button>
-                        <Button size="sm" variant="danger" onPress={() => setUsers(prev => prev.filter(u => u.id !== user.id))}>Disable</Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </Table>
+              {isLoadingUsers ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#7a1f32]" />
+                </div>
+              ) : (
+                <Table headers={['Name', 'Email', 'Role', 'Status', 'Actions']}>
+                  {users.map((user, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium text-gray-800">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          'px-2 py-0.5 rounded-full text-xs font-semibold border bg-gray-50 text-gray-700 border-gray-200'
+                        )}>
+                          {user.role?.toUpperCase()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn(
+                          'px-2 py-0.5 border text-xs rounded-full font-semibold',
+                          user.status === 'available' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+                        )}>
+                          {user.status === 'available' ? 'AVAILABLE' : 'UNAVAILABLE'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onPress={() => handleEditUser(user)}>Edit</Button>
+                          <Button size="sm" variant="danger" onPress={() => handleDeleteUser(user)}>Disable</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </Table>
+              )}
             </Card>
           </div>
         );
-      
+
       case 'settings':
       case 'config':
         return (
@@ -236,51 +290,54 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
             </Card>
           </div>
         );
-      
+
       case 'requests':
       case 'audit':
         return (
           <Card className="p-0 overflow-hidden">
-            <Table headers={['User', 'Action', 'Timestamp', 'Request ID', 'Remarks']}>
-              {mockAuditLogs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="font-semibold text-gray-800">{log.userName}</TableCell>
-                  <TableCell>
-                    <span className={cn(
-                      'px-2 py-0.5 rounded-full text-xs font-semibold border',
-                      log.action.includes('Approved') && 'bg-green-50 text-green-700 border-green-200',
-                      log.action.includes('Forwarded') && 'bg-yellow-50 text-yellow-700 border-yellow-200',
-                      log.action.includes('Submitted') && 'bg-blue-50 text-blue-700 border-blue-200'
-                    )}>
-                      {log.action}
-                    </span>
-                  </TableCell>
-                  <TableCell>{log.timestamp}</TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs">{log.requestId}</span>
-                  </TableCell>
-                  <TableCell>
-                    {log.remarks ? (
-                      <span className="text-gray-500 text-xs">{log.remarks}</span>
-                    ) : (
-                      <span className="text-gray-400 text-xs">-</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </Table>
+            {isLoadingLogs ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="w-8 h-8 animate-spin text-[#7a1f32]" />
+              </div>
+            ) : (
+              <Table headers={['User', 'Action', 'Timestamp', 'Request ID', 'Remarks']}>
+                {logs.map((log, index) => (
+                  <TableRow key={log.id || index}>
+                    <TableCell className="font-semibold text-gray-800">{log.actor?.name || 'System'}</TableCell>
+                    <TableCell>
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-semibold border bg-gray-50 text-gray-700 border-gray-200'
+                      )}>
+                        {log.action}
+                      </span>
+                    </TableCell>
+                    <TableCell>{log.timestamp ? new Date(log.timestamp).toLocaleString() : '-'}</TableCell>
+                    <TableCell>
+                      <span className="font-mono text-xs">{log.booking?.bookingId ? `REQ-${log.booking.bookingId}` : '-'}</span>
+                    </TableCell>
+                    <TableCell>
+                      {log.remarks ? (
+                        <span className="text-gray-500 text-xs">{log.remarks}</span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </Table>
+            )}
           </Card>
         );
-      
+
       case 'venues':
         return <AdminVenuesPage />;
-      
+
       case 'clubs':
         return <AdminClubsPage />;
-      
+
       case 'people':
         return <AdminPeoplePage />;
-      
+
       default:
         return null;
     }
@@ -288,6 +345,13 @@ export function AdminDashboard({ activeSection = 'overview' }: AdminDashboardPro
 
   return (
     <div className="space-y-4">
+      {loadError?.section === activeSection && (
+        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{loadError.message}</span>
+        </div>
+      )}
+
       {activeSection === 'overview' && (
         <>
           <div>
