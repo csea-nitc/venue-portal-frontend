@@ -17,6 +17,7 @@ export default function Home() {
     }
 
     const role = localStorage.getItem('perms_user_role');
+
     if (role) {
       const normalizedRole = role.toUpperCase();
       const routeMap: Record<string, string> = {

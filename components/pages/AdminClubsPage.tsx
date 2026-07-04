@@ -121,12 +121,20 @@ export function AdminClubsPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-800">Club Registry</h1>
           <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
+          <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
         </div>
+        <Button variant="primary" size="sm" onPress={handleOpenAdd}>
+          <Plus className="w-4 h-4 inline mr-1" /> Add Club
         <Button variant="primary" size="sm" onPress={handleOpenAdd}>
           <Plus className="w-4 h-4 inline mr-1" /> Add Club
         </Button>
       </div>
 
+<<<<<<< HEAD
+      <div className="flex gap-4 flex-wrap">
+        <StatCard title="Total Clubs" value={totalCount.toString()} />
+        <StatCard title="Active" value={activeCount.toString()} />
+        <StatCard title="Inactive" value="0" variant="danger" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard title="Total Clubs" value={stats.total.toString()} />
         <StatCard title="Active Registry" value={stats.active.toString()} />

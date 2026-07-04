@@ -59,6 +59,7 @@ export function Select({
             <ListBoxItem
               id={opt.id}
               key={opt.id}
+              id={opt.id}
               textValue={opt.label}
               className={({ isFocused, isSelected, isHovered }) => cn(
                 'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',
