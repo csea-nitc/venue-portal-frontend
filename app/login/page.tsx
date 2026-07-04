@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ShieldAlert, CheckCircle2, Calendar, Clock, Compass, HelpCircle, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, Calendar, Clock, Compass, HelpCircle, Loader2, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -15,7 +13,9 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       const error = params.get('error');
       if (error) {
-        setErrorMessage(decodeURIComponent(error));
+        setTimeout(() => {
+          setErrorMessage(decodeURIComponent(error));
+        }, 0);
       }
     }
   }, []);
@@ -85,7 +85,7 @@ export default function LoginPage() {
           <div className="lg:col-span-5">
             <div className="bg-surface/85 backdrop-blur-md rounded-[2rem] border border-card-header/60 p-8 lg:p-10 shadow-xl relative overflow-hidden">
               {/* Card top gradient line */}
-              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-accent to-secondary" />
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-linear-to-r from-primary via-accent to-secondary" />
 
               <div className="text-center space-y-6">
                 <div>

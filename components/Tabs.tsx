@@ -28,7 +28,7 @@ export function Tabs({ tabs, children, defaultTab }: TabsProps) {
               cn(
                 'px-4 py-2 text-sm font-medium transition-all relative outline-none cursor-pointer',
                 isSelected
-                  ? 'text-[#7a1f32] font-semibold border-b-2 border-[#7a1f32]'
+                  ? 'text-primary font-semibold border-b-2 border-primary'
                   : 'text-gray-500 hover:text-gray-800'
               )
             }

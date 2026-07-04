@@ -72,8 +72,10 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
   useEffect(() => {
     fetchBookings('/bookings')
       .then((res) => {
-        setBookings((res.data || []).map(toBooking));
-        setError(null);
+        if (res) {
+          setBookings((res.data || []).map(toBooking));
+          setError(null);
+        }
       })
       .catch((err) => setError(err.message || 'Unable to load bookings.'));
   }, [fetchBookings]);
@@ -88,7 +90,7 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
 
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === id && res.data ? toBooking(res.data) : booking
+          booking.id === id && res && res.data ? toBooking(res.data) : booking
         )
       );
       setError(null);
@@ -104,7 +106,7 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#7a1f32]">{title}</h1>
+        <h1 className="text-2xl font-bold text-primary">{title}</h1>
         <p className="text-sm text-gray-500">Review and manage venue booking requests</p>
       </div>
 
@@ -129,9 +131,9 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
           defaultTab="pending"
         >
           <TabPanelComponent id="pending">
-            <h3 className="text-base font-bold text-[#7a1f32] mb-4">PENDING REQUESTS</h3>
+            <h3 className="text-base font-bold text-primary mb-4">PENDING REQUESTS</h3>
             {pendingRequests.length === 0 ? (
-              <p className="text-[#8d6e63] italic text-sm">{isLoading ? 'Loading requests...' : 'No pending requests.'}</p>
+              <p className="text-text-muted italic text-sm">{isLoading ? 'Loading requests...' : 'No pending requests.'}</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pendingRequests.map((booking) => (
@@ -148,9 +150,9 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
           </TabPanelComponent>
 
           <TabPanelComponent id="approved">
-            <h3 className="text-base font-bold text-[#7a1f32] mb-4">APPROVAL HISTORY</h3>
+            <h3 className="text-base font-bold text-primary mb-4">APPROVAL HISTORY</h3>
             {approvedRequests.length === 0 ? (
-              <p className="text-[#8d6e63] italic text-sm">No approved requests.</p>
+              <p className="text-text-muted italic text-sm">No approved requests.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {approvedRequests.map((booking) => (
@@ -161,9 +163,9 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
           </TabPanelComponent>
 
           <TabPanelComponent id="rejected">
-            <h3 className="text-base font-bold text-[#7a1f32] mb-4">REJECTED REQUESTS</h3>
+            <h3 className="text-base font-bold text-primary mb-4">REJECTED REQUESTS</h3>
             {rejectedRequests.length === 0 ? (
-              <p className="text-[#8d6e63] italic text-sm">No rejected requests.</p>
+              <p className="text-text-muted italic text-sm">No rejected requests.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rejectedRequests.map((booking) => (

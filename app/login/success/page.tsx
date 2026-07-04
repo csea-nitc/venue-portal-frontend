@@ -66,12 +66,12 @@ export default function LoginSuccessPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#fcf0e3] flex flex-col items-center justify-center p-4">
-      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border-2 border-[#e9ccbf] p-10 max-w-md w-full text-center shadow-xl space-y-6">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border-2 border-card-header p-10 max-w-md w-full text-center shadow-xl space-y-6">
         {status === 'loading' && (
           <>
             <div className="flex justify-center">
-              <Loader2 className="w-12 h-12 text-[#7a1f32] animate-spin" />
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
             </div>
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-gray-800">Verifying session...</h2>

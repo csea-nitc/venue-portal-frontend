@@ -34,7 +34,7 @@ export function Select({
       placeholder={placeholder}
     >
       {label && (
-        <Label className="text-xs font-bold uppercase tracking-wider text-[#8d6e63]">
+        <Label className="text-xs font-bold uppercase tracking-wider text-text-muted">
           {label}
         </Label>
       )}
@@ -43,7 +43,7 @@ export function Select({
         'bg-white border border-gray-200 text-gray-900 shadow-sm',
         'transition-all duration-150 focus:outline-none',
         isHovered && 'border-gray-300',
-        isFocusVisible && 'border-[#7a1f32] ring-2 ring-[#7a1f32]/25',
+        isFocusVisible && 'border-primary ring-2 ring-primary/25',
         isPressed && 'scale-[0.99] border-gray-300'
       )}>
         <SelectValue className="placeholder:text-gray-400 font-medium" />
@@ -59,12 +59,11 @@ export function Select({
             <ListBoxItem
               id={opt.id}
               key={opt.id}
-              id={opt.id}
               textValue={opt.label}
               className={({ isFocused, isSelected, isHovered }) => cn(
                 'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',
-                (isFocused || isHovered) && 'bg-[#f4d9c6]/50 text-[#7a1f32]',
-                isSelected && 'bg-[#7a1f32] text-white'
+                (isFocused || isHovered) && 'bg-card/50 text-primary',
+                isSelected && 'bg-primary text-white'
               )}
             >
               {opt.label}

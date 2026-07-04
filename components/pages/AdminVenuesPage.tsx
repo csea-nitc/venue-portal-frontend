@@ -122,7 +122,7 @@ export function AdminVenuesPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {isFetching ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-10 h-10 animate-spin text-[#4b90a1]" />
+            <Loader2 className="w-10 h-10 animate-spin text-accent" />
           </div>
         ) : fetchError ? (
           <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
@@ -214,7 +214,7 @@ export function AdminVenuesPage() {
               id="isAvailable"
               checked={isAvailable}
               onChange={(e) => setIsAvailable(e.target.checked)}
-              className="w-4 h-4 text-[#4b90a1] rounded focus:ring-[#4b90a1]"
+              className="w-4 h-4 text-accent rounded focus:ring-accent"
             />
             <label htmlFor="isAvailable" className="text-sm font-medium text-gray-700 cursor-pointer">
               Venue is available for booking

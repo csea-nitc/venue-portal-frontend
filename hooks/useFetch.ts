@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useCallback } from 'react';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -7,7 +5,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface RequestConfig {
   method?: HttpMethod;
   headers?: HeadersInit;
-  body?: unknown;
+  body?: any;
 }
 
 interface HttpState<T> {
@@ -16,11 +14,7 @@ interface HttpState<T> {
   error: string | null;
 }
 
-function getErrorMessage(err: unknown) {
-  return err instanceof Error ? err.message : 'Something went wrong!';
-}
-
-export function useFetch<T = unknown>() {
+export function useFetch<T = any>() {
   const [state, setState] = useState<HttpState<T>>({
     data: null,
     isLoading: false,
@@ -28,7 +22,7 @@ export function useFetch<T = unknown>() {
   });
 
   const sendRequest = useCallback(
-    async (url: string, config?: RequestConfig): Promise<T> => {
+    async (url: string, config?: RequestConfig) => {
       setState({ data: null, isLoading: true, error: null });
 
       try {
@@ -42,16 +36,16 @@ export function useFetch<T = unknown>() {
           method,
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...headers,
           },
-          body: body !== undefined ? JSON.stringify(body) : null,
+          body: body ? JSON.stringify(body) : null,
         };
 
-        const response = await fetch(url, fetchOptions);
+        const response = await fetch(fullUrl, fetchOptions);
         
         // Handle empty responses
         let responseData = null;
->>>>>>> a279c237d27a365992423eb166b681f472125fab
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           responseData = await response.json();
@@ -65,12 +59,19 @@ export function useFetch<T = unknown>() {
           return;
         }
 
-
         if (!response.ok) {
+          let errorMessage = responseData?.message || responseData?.error;
+          if (responseData?.details && Array.isArray(responseData.details)) {
+            const detailsStr = responseData.details
+              .map((d: any) => {
+                const field = d.path ? d.path.filter((p: any) => p !== 'body' && p !== 'params' && p !== 'query').join('.') : '';
+                return `${field ? field + ': ' : ''}${d.message}`;
+              })
+              .join(', ');
+            errorMessage = errorMessage ? `${errorMessage} ${detailsStr}` : detailsStr;
+          }
           throw new Error(
-            responseData?.message || 
-            responseData?.error || 
-            `Request failed with status ${response.status}`
+            errorMessage || `Request failed with status ${response.status}`
           );
         }
 
@@ -80,7 +81,7 @@ export function useFetch<T = unknown>() {
         setState({
           data: null,
           isLoading: false,
-          error: getErrorMessage(err),
+          error: err.message || 'Something went wrong!',
         });
         throw err;
       }

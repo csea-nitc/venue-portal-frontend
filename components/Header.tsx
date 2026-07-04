@@ -15,10 +15,12 @@ export function Header({ onMenuPress }: HeaderProps) {
   useEffect(() => {
     const loggedIn = localStorage.getItem('perms_logged_in');
     if (loggedIn) {
-      setUser({
-        name: localStorage.getItem('perms_user_name') || 'User',
-        email: localStorage.getItem('perms_user_email') || '',
-      });
+      setTimeout(() => {
+        setUser({
+          name: localStorage.getItem('perms_user_name') || 'User',
+          email: localStorage.getItem('perms_user_email') || '',
+        });
+      }, 0);
     }
   }, []);
 
@@ -32,7 +34,7 @@ export function Header({ onMenuPress }: HeaderProps) {
   };
 
   return (
-    <header className="bg-[#3b6896] text-white py-4 px-6 lg:px-8 shadow-md flex items-center justify-between">
+    <header className="bg-secondary text-white py-4 px-6 lg:px-8 shadow-md flex items-center justify-between">
       <div className="flex items-center gap-4">
         {onMenuPress && (
           <button 
@@ -51,7 +53,7 @@ export function Header({ onMenuPress }: HeaderProps) {
       {user && (
         <div className="flex items-center gap-3 lg:gap-4">
           <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
-            <div className="w-5 h-5 rounded-full bg-white text-[#3b6896] flex items-center justify-center text-[10px] font-bold">
+            <div className="w-5 h-5 rounded-full bg-white text-secondary flex items-center justify-center text-[10px] font-bold">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="text-left hidden sm:block">

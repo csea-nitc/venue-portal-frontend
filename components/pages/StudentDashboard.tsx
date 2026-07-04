@@ -85,46 +85,46 @@ export function StudentDashboard() {
           <h2 className="text-xl font-semibold mb-4">Submit New Permission Request</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <TextField className="flex flex-col gap-2">
-              <Label className="text-sm font-semibold text-[#7a1f32]">Event Name</Label>
+              <Label className="text-sm font-semibold text-primary">Event Name</Label>
               <AriaInput
                 value={formData.eventName}
                 onChange={handleInputChange('eventName')}
                 placeholder="e.g., Club Meeting, Project Presentation"
-                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4b90a1] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 required
               />
             </TextField>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextField className="flex flex-col gap-2">
-                <Label className="text-sm font-semibold text-[#7a1f32]">Start Date & Time</Label>
+                <Label className="text-sm font-semibold text-primary">Start Date & Time</Label>
                 <AriaInput
                   type="datetime-local"
                   value={formData.eventStart}
                   onChange={handleInputChange('eventStart')}
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4b90a1] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   required
                 />
               </TextField>
               
               <TextField className="flex flex-col gap-2">
-                <Label className="text-sm font-semibold text-[#7a1f32]">End Date & Time</Label>
+                <Label className="text-sm font-semibold text-primary">End Date & Time</Label>
                 <AriaInput
                   type="datetime-local"
                   value={formData.eventEnd}
                   onChange={handleInputChange('eventEnd')}
-                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4b90a1] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   required
                 />
               </TextField>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label className="text-sm font-semibold text-[#7a1f32]">Venue</Label>
+              <Label className="text-sm font-semibold text-primary">Venue</Label>
               <select
                 value={formData.venueId}
                 onChange={(e) => setFormData(prev => ({ ...prev, venueId: e.target.value }))}
-                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4b90a1] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 required
               >
                 <option value="">Select a venue</option>
@@ -135,13 +135,13 @@ export function StudentDashboard() {
             </div>
 
             <TextField className="flex flex-col gap-2">
-              <Label className="text-sm font-semibold text-[#7a1f32]">Remarks (Optional)</Label>
+              <Label className="text-sm font-semibold text-primary">Remarks (Optional)</Label>
               <AriaTextArea
                 value={formData.remarks}
                 onChange={handleInputChange('remarks')}
                 placeholder="Additional information or special requirements"
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#4b90a1] focus:border-transparent resize-none"
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
               />
             </TextField>
 
@@ -158,7 +158,7 @@ export function StudentDashboard() {
           <h2 className="text-xl font-semibold mb-4">Recent Requests</h2>
           {isFetching ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-[#4b90a1]" />
+              <Loader2 className="w-8 h-8 animate-spin text-accent" />
             </div>
           ) : fetchError ? (
             <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">

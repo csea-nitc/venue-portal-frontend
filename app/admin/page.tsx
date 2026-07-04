@@ -38,23 +38,23 @@ export default function AdminPage() {
 
   if (authStatus !== 'authorized') {
     return (
-      <div className="min-h-screen bg-[#fcf0e3] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-[#7a1f32]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#fcf0e3] overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Header onMenuPress={() => setSidebarOpen(true)} />
-      <div className="flex flex-grow flex-1 overflow-hidden">
+      <div className="flex grow flex-1 overflow-hidden">
         <AdminSidebar 
           activeItem={adminSection} 
           setActiveItem={setAdminSection} 
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-grow overflow-y-auto p-4 lg:p-6 transition-all duration-300">
+        <main className="grow overflow-y-auto p-4 lg:p-6 transition-all duration-300">
           <AdminDashboard activeSection={adminSection} />
         </main>
       </div>

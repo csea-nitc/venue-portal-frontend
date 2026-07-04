@@ -27,7 +27,7 @@ export function Sidebar({ active, onNavigate }: SidebarProps) {
               onClick={() => onNavigate(item.id)}
               className={cn(
                 'w-full flex items-center gap-4 px-10 py-4 text-xl transition-colors',
-                isActive ? 'bg-[#b76f7c]' : 'hover:bg-[#7a1f32]'
+                isActive ? 'bg-primary-light' : 'hover:bg-primary'
               )}
             >
               <Icon className="w-7 h-7" />

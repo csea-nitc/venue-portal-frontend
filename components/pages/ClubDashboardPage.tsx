@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -11,7 +11,6 @@ import { Table, TableCell, TableRow, StatusBadge } from '@/components/Table';
 import { StatCard } from '@/components/Card';
 import { AvailabilityGrid } from '@/components/AvailabilityGrid';
 import { Booking } from '@/types';
-import { useFetch } from '@/hooks/useFetch';
 
 const initialBookings: Booking[] = [
   { id: '1', title: 'CSEA Coding Contest', venue: 'SSL Lab', startDate: '22/03/26 17:00', endDate: '22/03/26 20:00', bookingDate: '10/03/26', status: 'approved', club: 'CSEA' },
@@ -20,8 +19,6 @@ const initialBookings: Booking[] = [
   { id: '4', title: 'Core Committee Meet', venue: 'Meeting Room', startDate: '27/03/26 15:00', endDate: '27/03/26 16:00', bookingDate: '14/03/26', status: 'pending', club: 'CSEA' },
   { id: '5', title: 'Alumni Guest Lecture', venue: 'APJ Hall', startDate: '28/03/26 10:00', endDate: '28/03/26 12:30', bookingDate: '15/03/26', status: 'approved', club: 'CSEA' },
 ];
-
-const venuesList = ['SSL Lab', 'NSL Lab', 'Seminar Hall', 'APJ Hall', 'Meeting Room', 'ELHC 402'];
 
 const venuesList = ['SSL Lab', 'NSL Lab', 'Seminar Hall', 'APJ Hall', 'Meeting Room', 'ELHC 402'];
 
@@ -35,25 +32,7 @@ export function ClubDashboardPage() {
   const [endDateTime, setEndDateTime] = useState('');
   const [description, setDescription] = useState('');
 
-
-  //currently userId isn't being stored in local storage, so to get bookings of each person we need to store user id. 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await getBookings('/bookings/' + userId);
-        if (res) {
-          setBookings(res);
-        }
-      } catch (e) {
-        alert('Failed to fetch bookings.');
-      }
-    })();
-  }, []);
-
-
-
-
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!eventName || !venue || !startDateTime || !endDateTime) {
       alert('Please fill in all required fields.');
       return;
@@ -70,18 +49,9 @@ export function ClubDashboardPage() {
       club: 'CSEA',
       subject: description || 'No description provided'
     };
-    try {
-      await addBooking('/bookings', {
-        method: 'POST',
-        body: newBooking,
-      });
-    } catch (e) {
-      alert('Failed to add booking.');
-      return;
-    }
 
     setBookings([newBooking, ...bookings]);
-
+    
     // Clear inputs
     setEventName('');
     setStartDateTime('');
@@ -98,21 +68,11 @@ export function ClubDashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#7a1f32]">Welcome, Club Secretary</h1>
-          <p className="text-sm text-gray-500">Review and manage your booking requests</p>
-        </div>
-      </div>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#7a1f32]">Welcome, Club Secretary</h1>
+          <h1 className="text-2xl font-bold text-primary">Welcome, Club Secretary</h1>
           <p className="text-sm text-gray-500">Review and manage your booking requests</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Pending requests" value={String(pendingCount)} />
-        <StatCard title="Approved requests" value={String(approvedCount)} />
-        <StatCard title="Rejected requests" value={String(rejectedCount)} variant="danger" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard title="Pending requests" value={String(pendingCount)} />
         <StatCard title="Approved requests" value={String(approvedCount)} />
@@ -121,7 +81,7 @@ export function ClubDashboardPage() {
 
       {/* My Bookings list */}
       <Card className="p-6">
-        <h2 className="text-lg font-bold text-[#7a1f32] mb-4">My Booking Requests</h2>
+        <h2 className="text-lg font-bold text-primary mb-4">My Booking Requests</h2>
         <Tabs
           tabs={[
             { id: 'all', label: 'All' },
@@ -199,7 +159,7 @@ export function ClubDashboardPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-base font-semibold text-[#4b90a1] mb-4 pb-2 border-b border-gray-100">New booking request</h2>
+        <h2 className="text-base font-semibold text-accent mb-4 pb-2 border-b border-gray-100">New booking request</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <Input label="Event name" value={eventName} onChange={(e) => setEventName((e.target as HTMLInputElement).value)} />
           <Select
@@ -221,55 +181,9 @@ export function ClubDashboardPage() {
       </Card>
 
       {/* Venue Selection & Availability Calendar */}
-      <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-[#e9ccbf]/40 space-y-4">
+      <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-card-header/40 space-y-4">
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-bold text-[#7a1f32]">Select Venue</h2>
-          <p className="text-xs text-gray-500">Click a venue below to view its availability calendar and load it in the booking form</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {venuesList.map((v) => (
-            <Button
-              key={v}
-              variant={venue === v ? 'primary' : 'outline'}
-              onPress={() => setVenue(v)}
-              size="sm"
-            >
-              {v}
-            </Button>
-          ))}
-        </div>
-        <AvailabilityGrid selectedVenue={venue} />
-      </div>
-
-      
-      
-
-      <Card className="p-6">
-        <h2 className="text-base font-semibold text-[#4b90a1] mb-4 pb-2 border-b border-gray-100">New booking request</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <Input label="Event name" value={eventName} onChange={(e) => setEventName((e.target as HTMLInputElement).value)} />
-          <Select
-            label="Venue"
-            selectedKey={venue}
-            onSelectionChange={(key) => setVenue(String(key))}
-            options={venuesList.map(v => ({ id: v, label: v }))}
-            className="w-full"
-          />
-          <Input label="Start date & time" type="datetime-local" value={startDateTime} onChange={(e) => setStartDateTime((e.target as HTMLInputElement).value)} />
-          <Input label="End date & time" type="datetime-local" value={endDateTime} onChange={(e) => setEndDateTime((e.target as HTMLInputElement).value)} />
-          <div className="md:col-span-2">
-            <TextArea label="Description" value={description} onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)} />
-          </div>
-          <div className="md:col-span-2 flex justify-end mt-2">
-            <Button variant="primary" onPress={handleSubmit}>Submit Request</Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Venue Selection & Availability Calendar */}
-      <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-[#e9ccbf]/40 space-y-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-lg font-bold text-[#7a1f32]">Select Venue</h2>
+          <h2 className="text-lg font-bold text-primary">Select Venue</h2>
           <p className="text-xs text-gray-500">Click a venue below to view its availability calendar and load it in the booking form</p>
         </div>
         <div className="flex gap-2 flex-wrap">

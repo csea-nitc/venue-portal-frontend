@@ -1,15 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
-    setMounted(true);
     const loggedIn = localStorage.getItem('perms_logged_in');
     if (!loggedIn) {
       router.push('/login');
@@ -37,10 +34,10 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#fcf0e3] flex flex-col items-center justify-center p-4">
-      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border-2 border-[#e9ccbf] p-10 max-w-md w-full text-center shadow-xl space-y-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="bg-white/80 backdrop-blur-md rounded-[2rem] border-2 border-card-header p-10 max-w-md w-full text-center shadow-xl space-y-4">
         <div className="flex justify-center">
-          <Loader2 className="w-12 h-12 text-[#7a1f32] animate-spin" />
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
         </div>
         <div className="space-y-1">
           <h2 className="text-xl font-bold text-gray-800 animate-pulse">Welcome back</h2>

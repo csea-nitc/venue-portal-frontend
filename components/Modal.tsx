@@ -37,7 +37,7 @@ export function Modal({ isOpen, onOpenChange, title, children, className }: Moda
           {({ close }) => (
             <>
               <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-                <Heading slot="title" className="text-lg font-bold text-[#7a1f32]">{title}</Heading>
+                <Heading slot="title" className="text-lg font-bold text-primary">{title}</Heading>
                 <Button
                   variant="outline"
                   size="sm"

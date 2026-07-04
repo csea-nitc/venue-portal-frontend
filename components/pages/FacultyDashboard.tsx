@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { Card, StatCard } from '@/components/Card';
 import { TextArea } from '@/components/TextArea';
-import { cn } from '@/lib/utils';
 import { useFetch } from '@/hooks/useFetch';
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 export function FacultyDashboard() {
   const { data: bookingsData, isLoading: isFetching, error: fetchError, sendRequest: fetchBookings } = useFetch();
@@ -52,7 +51,7 @@ export function FacultyDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#7a1f32]">Welcome, Faculty Dashboard</h1>
+        <h1 className="text-2xl font-bold text-primary">Welcome, Faculty Dashboard</h1>
         <p className="text-sm text-gray-500">Review and manage pending academic and administrative permission requests</p>
       </div>
 
@@ -69,7 +68,7 @@ export function FacultyDashboard() {
             
             {isFetching ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[#4b90a1]" />
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
               </div>
             ) : fetchError ? (
               <div className="p-4 bg-red-50 text-red-700 rounded-lg flex items-center gap-2">
@@ -82,7 +81,7 @@ export function FacultyDashboard() {
                   <p className="text-center text-gray-500 py-8">No pending requests found.</p>
                 ) : (
                   pendingRequests.map((request: any) => (
-                    <div key={request.bookingId} className="p-4 border border-gray-100 rounded-xl bg-white shadow-sm hover:border-[#4b90a1] transition-colors">
+                    <div key={request.bookingId} className="p-4 border border-gray-100 rounded-xl bg-white shadow-sm hover:border-accent transition-colors">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -132,7 +131,7 @@ export function FacultyDashboard() {
 
         <div>
           {selectedRequest && action ? (
-            <Card className="p-5 sticky top-6 border-2 border-[#4b90a1]">
+            <Card className="p-5 sticky top-6 border-2 border-accent">
               <h2 className="text-base font-semibold text-gray-800 mb-3">
                 {action === 'approve' ? 'Approve Request' : 'Reject Request'}
               </h2>

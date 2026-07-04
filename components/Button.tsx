@@ -17,7 +17,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <AriaButton
-      className={({ isPressed, isHovered, isFocusVisible, isDisabled }) =>
+      className={({ isPressed, isHovered, isFocusVisible }) =>
         cn(
           'rounded-full font-semibold transition-all',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
@@ -30,42 +30,42 @@ export function Button({
           
           // Primary variant
           variant === 'primary' && [
-            'bg-[#7a1f32] text-white',
-            isHovered && 'bg-[#5a1725]',
+            'bg-primary text-white',
+            isHovered && 'bg-primary-dark',
             isPressed && 'bg-[#3a0f15] scale-95',
-            isFocusVisible && 'ring-2 ring-[#7a1f32] ring-offset-2',
+            isFocusVisible && 'ring-2 ring-primary ring-offset-2',
           ],
           
           // Secondary variant
           variant === 'secondary' && [
-            'bg-[#4b90a1] text-white',
+            'bg-accent text-white',
             isHovered && 'bg-[#3a7c8c]',
             isPressed && 'bg-[#2b5e6b] scale-95',
-            isFocusVisible && 'ring-2 ring-[#4b90a1] ring-offset-2',
+            isFocusVisible && 'ring-2 ring-accent ring-offset-2',
           ],
           
           // Outline variant
           variant === 'outline' && [
-            'border-2 border-[#7a1f32] text-[#7a1f32]',
-            isHovered && 'bg-[#7a1f32] text-white',
-            isPressed && 'bg-[#5a1725] text-white scale-95',
-            isFocusVisible && 'ring-2 ring-[#7a1f32] ring-offset-2',
+            'border-2 border-primary text-primary',
+            isHovered && 'bg-primary text-white',
+            isPressed && 'bg-primary-dark text-white scale-95',
+            isFocusVisible && 'ring-2 ring-primary ring-offset-2',
           ],
           
           // Danger variant
           variant === 'danger' && [
-            'bg-[#e8999c] text-[#5a1725]',
+            'bg-danger text-primary-dark',
             isHovered && 'bg-[#d88080]',
             isPressed && 'bg-[#c86767] scale-95',
-            isFocusVisible && 'ring-2 ring-[#e8999c] ring-offset-2',
+            isFocusVisible && 'ring-2 ring-danger ring-offset-2',
           ],
           
           // Success variant
           variant === 'success' && [
-            'bg-[#95d5b2] text-[#1a472a]',
+            'bg-success text-[#1a472a]',
             isHovered && 'bg-[#75c59a]',
             isPressed && 'bg-[#55b582] scale-95',
-            isFocusVisible && 'ring-2 ring-[#95d5b2] ring-offset-2',
+            isFocusVisible && 'ring-2 ring-success ring-offset-2',
           ],
           
           className

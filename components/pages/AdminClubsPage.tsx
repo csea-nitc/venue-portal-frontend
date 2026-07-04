@@ -121,20 +121,12 @@ export function AdminClubsPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-800">Club Registry</h1>
           <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
-          <p className="text-xs text-gray-500">Manage recognized student clubs and their coordinators</p>
         </div>
-        <Button variant="primary" size="sm" onPress={handleOpenAdd}>
-          <Plus className="w-4 h-4 inline mr-1" /> Add Club
         <Button variant="primary" size="sm" onPress={handleOpenAdd}>
           <Plus className="w-4 h-4 inline mr-1" /> Add Club
         </Button>
       </div>
 
-<<<<<<< HEAD
-      <div className="flex gap-4 flex-wrap">
-        <StatCard title="Total Clubs" value={totalCount.toString()} />
-        <StatCard title="Active" value={activeCount.toString()} />
-        <StatCard title="Inactive" value="0" variant="danger" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard title="Total Clubs" value={stats.total.toString()} />
         <StatCard title="Active Registry" value={stats.active.toString()} />
@@ -143,7 +135,7 @@ export function AdminClubsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {isFetching ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-10 h-10 animate-spin text-[#4b90a1]" />
+            <Loader2 className="w-10 h-10 animate-spin text-accent" />
           </div>
         ) : fetchError ? (
           <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
@@ -206,7 +198,7 @@ export function AdminClubsPage() {
         <div className="space-y-4 p-1">
           {submitError && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{submitError}</span>
             </div>
           )}

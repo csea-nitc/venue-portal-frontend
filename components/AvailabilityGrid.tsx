@@ -80,18 +80,18 @@ export function AvailabilityGrid({ selectedVenue = 'SSL Lab' }: AvailabilityGrid
   };
 
   return (
-    <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-[#e9ccbf]/40">
-      <h2 className="text-xl font-bold text-[#8d6e63] mb-5">Venue availability - {selectedVenue}</h2>
+    <div className="bg-[#fdf6ee] rounded-3xl p-6 shadow-sm border border-card-header/40">
+      <h2 className="text-xl font-bold text-text-muted mb-5">Venue availability - {selectedVenue}</h2>
       
       {/* Scrollable grid wrapper for mobile/tablet responsive layout */}
       <div className="overflow-x-auto pb-4">
         <div className="min-w-[960px] px-1">
           {/* Hours header row */}
           <div className="flex mb-3">
-            <div className="w-16 flex-shrink-0" />
-            <div className="flex-grow grid grid-cols-[repeat(24,_minmax(0,_1fr))] gap-1.5">
+            <div className="w-16 shrink-0" />
+            <div className="grow grid grid-cols-24 gap-1.5">
               {HOURS.map((hour) => (
-                <div key={hour} className="text-center text-xs font-semibold text-[#8d6e63]">
+                <div key={hour} className="text-center text-xs font-semibold text-text-muted">
                   {hour}
                 </div>
               ))}
@@ -102,10 +102,10 @@ export function AvailabilityGrid({ selectedVenue = 'SSL Lab' }: AvailabilityGrid
           <div className="space-y-2.5">
             {DAYS.map((day) => (
               <div key={day} className="flex items-center">
-                <div className="w-16 flex-shrink-0 font-semibold text-base text-[#8d6e63]">
+                <div className="w-16 shrink-0 font-semibold text-base text-text-muted">
                   {day}
                 </div>
-                <div className="flex-grow grid grid-cols-[repeat(24,_minmax(0,_1fr))] gap-1.5">
+                <div className="grow grid grid-cols-24 gap-1.5">
                   {(currentData[day] || Array(24).fill(1)).map((status, index) => (
                     <div
                       key={index}
@@ -121,22 +121,22 @@ export function AvailabilityGrid({ selectedVenue = 'SSL Lab' }: AvailabilityGrid
       </div>
 
       {/* Legend inside the card */}
-      <div className="flex flex-wrap gap-6 mt-6 pt-5 border-t border-[#e9ccbf]/40">
+      <div className="flex flex-wrap gap-6 mt-6 pt-5 border-t border-card-header/40">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-md bg-[#8ea8c2]" />
-          <span className="text-sm font-semibold text-[#8d6e63]">available</span>
+          <span className="text-sm font-semibold text-text-muted">available</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-md bg-[#bd6e74]" />
-          <span className="text-sm font-semibold text-[#8d6e63]">occupied</span>
+          <span className="text-sm font-semibold text-text-muted">occupied</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-md bg-[#f4e9dc]" />
-          <span className="text-sm font-semibold text-[#8d6e63]">off hours</span>
+          <span className="text-sm font-semibold text-text-muted">off hours</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 rounded-md bg-[#93a97a]" />
-          <span className="text-sm font-semibold text-[#8d6e63]">your booking</span>
+          <span className="text-sm font-semibold text-text-muted">your booking</span>
         </div>
       </div>
     </div>

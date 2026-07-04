@@ -1,132 +1,182 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/Card';
 import { Table, TableCell, TableRow, StatusBadge, RoleBadge } from '@/components/Table';
-import { Plus, Loader2 } from 'lucide-react';
-import { useFetch } from '@/hooks/useFetch';
-import { Person } from '@/types';
+import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components/Input';
 import { Select } from '@/components/Select';
-
-const mockPeople: Person[] = [
-  { id: '1', name: 'Mr. Vinod Pathari', email: 'pathari@nitc.ac.in', role: 'faculty_in_charge', status: 'available' },
-  { id: '2', name: 'Mrs. Chandramani', email: 'chandramani@nitc.ac.in', role: 'faculty_coordinator', status: 'unavailable' },
-  { id: '3', name: 'Mr. Rahul N', email: 'rahul@nitc.ac.in', role: 'staff_incharge', status: 'available' },
-  { id: '4', name: 'Mrs. Subhashini', email: 'subha@nitc.ac.in', role: 'hod', status: 'unavailable' },
-  { id: '5', name: 'Mrs. Abidha V P', email: 'abidha@nitc.ac.in', role: 'faculty_in_charge', status: 'available' },
-];
+import { useFetch } from '@/hooks/useFetch';
 
 export function AdminPeoplePage() {
-  const [people, setPeople] = useState<Person[]>(mockPeople);
+  const { data: usersData, isLoading: isFetching, error: fetchError, sendRequest: fetchUsers } = useFetch();
+  const { isLoading: isSubmitting, error: submitError, sendRequest: saveUser } = useFetch();
+  const { sendRequest: deleteUser } = useFetch();
+
   const [isOpen, setIsOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
 
   // Form states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('faculty_in_charge');
+  const [role, setRole] = useState('FACULTY_IN_CHARGE');
   const [status, setStatus] = useState('available');
+
+  useEffect(() => {
+    fetchUsers('/api/admin/users');
+  }, [fetchUsers]);
 
   const handleOpenAdd = () => {
     setEditId(null);
     setName('');
     setEmail('');
-    setRole('faculty_in_charge');
+    setRole('FACULTY_IN_CHARGE');
     setStatus('available');
     setIsOpen(true);
   };
 
-  const handleOpenEdit = (person: Person) => {
-    setEditId(person.id);
-    setName(person.name);
-    setEmail(person.email);
-    setRole(person.role);
-    setStatus(person.status);
+  const handleOpenEdit = (user: any) => {
+    setEditId(user.userId);
+    setName(user.name);
+    setEmail(user.email);
+    setRole(user.role);
+    setStatus(user.isActive ? 'available' : 'unavailable');
     setIsOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !email) {
       alert('Please fill in all required fields.');
       return;
     }
 
-    if (editId) {
-      setPeople(people.map(p => p.id === editId ? {
-        id: editId,
+    try {
+      const payload = {
         name,
         email,
-        role: role as any,
-        status: status as any
-      } : p));
-    } else {
-      const newPerson: Person = {
-        id: String(Date.now()),
-        name,
-        email,
-        role: role as any,
-        status: status as any
+        role,
+        isActive: status === 'available',
       };
-      setPeople([...people, newPerson]);
+
+      if (editId) {
+        await saveUser(`/api/admin/users/${editId}`, {
+          method: 'PUT',
+          body: {
+            name: payload.name,
+            role: payload.role,
+            isActive: payload.isActive,
+          },
+        });
+      } else {
+        await saveUser('/api/admin/users', {
+          method: 'POST',
+          body: payload,
+        });
+      }
+      setIsOpen(false);
+      fetchUsers('/api/admin/users');
+    } catch (err) {
+      console.error('Save user failed:', err);
     }
-    setIsOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to remove this person?')) {
-      setPeople(people.filter(p => p.id !== id));
+  const handleDelete = async (userId: number) => {
+    if (confirm('Are you sure you want to remove this user?')) {
+      try {
+        await deleteUser(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        fetchUsers('/api/admin/users');
+      } catch (err) {
+        console.error('Delete user failed:', err);
+      }
     }
   };
 
-  const totalPeople = people.length;
-  const staffCount = people.filter(p => p.role.includes('staff')).length;
-  const facultyCount = people.filter(p => p.role.includes('faculty') || p.role.includes('hod')).length;
+  const users = usersData?.users || [];
+  const totalUsers = users.length;
+  const clubCount = users.filter((u: any) => u.role === 'CLUB').length;
+  const facultyCount = users.filter((u: any) => u.role.startsWith('FACULTY') || u.role === 'HOD').length;
+  const staffCount = users.filter((u: any) => u.role === 'STAFF_IN_CHARGE').length;
+  const adminCount = users.filter((u: any) => u.role === 'ADMIN').length;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Directory & Roles</h1>
-          <p className="text-xs text-gray-500">Configure roles for faculty coordinators, HODs, and staff</p>
+          <h1 className="text-xl font-bold text-gray-800">User Management</h1>
+          <p className="text-xs text-gray-500">Configure roles and permissions for system users</p>
         </div>
         <Button variant="outline" size="sm" onPress={handleOpenAdd}>
-          <Plus className="w-4 h-4 inline mr-1" /> Add New
+          <Plus className="w-4 h-4 inline mr-1" /> Add User
         </Button>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <StatCard title="Total People" value={String(totalPeople)} />
-        <StatCard title="Staff" value={String(staffCount)} />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <StatCard title="Total Users" value={String(totalUsers)} />
+        <StatCard title="Clubs" value={String(clubCount)} />
         <StatCard title="Faculty" value={String(facultyCount)} />
+        <StatCard title="Staff" value={String(staffCount)} />
+        <StatCard title="Admins" value={String(adminCount)} />
       </div>
 
-      <Table headers={['Name', 'Email', 'Role', 'Status', 'Actions']}>
-        {people.map((person) => (
-          <TableRow key={person.id}>
-            <TableCell className="font-semibold text-gray-800">{person.name}</TableCell>
-            <TableCell>{person.email}</TableCell>
-            <TableCell><RoleBadge role={person.role} /></TableCell>
-            <TableCell><StatusBadge status={person.status} /></TableCell>
-            <TableCell>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onPress={() => handleOpenEdit(person)}>Edit</Button>
-                <Button size="sm" variant="danger" onPress={() => handleDelete(person.id)}>Delete</Button>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </Table>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {isFetching ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-accent" />
+          </div>
+        ) : fetchError ? (
+          <div className="p-6 text-center text-red-600 flex flex-col items-center gap-2">
+            <AlertCircle className="w-10 h-10" />
+            <p>{fetchError}</p>
+            <Button variant="outline" size="sm" onPress={() => fetchUsers('/api/admin/users')}>Retry</Button>
+          </div>
+        ) : (
+          <Table headers={['Name', 'Email', 'Role', 'Status', 'Actions']}>
+            {users.length === 0 ? (
+              <TableRow>
+                <TableCell className="text-center py-8 text-gray-500 italic">No users found</TableCell>
+                <TableCell>-</TableCell>
+                <TableCell>-</TableCell>
+                <TableCell>-</TableCell>
+                <TableCell>-</TableCell>
+              </TableRow>
+            ) : (
+              users.map((user: any) => (
+                <TableRow key={user.userId}>
+                  <TableCell className="font-semibold text-gray-800">{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <RoleBadge role={user.role} />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={user.isActive ? 'available' : 'unavailable'} />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onPress={() => handleOpenEdit(user)}>Edit</Button>
+                      <Button size="sm" variant="danger" onPress={() => handleDelete(user.userId)}>Delete</Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </Table>
+        )}
+      </div>
 
       <Modal
         isOpen={isOpen}
         onOpenChange={setIsOpen}
-        title={editId ? 'Edit Person Info' : 'Add New Person'}
+        title={editId ? 'Edit User Info' : 'Add New User'}
       >
         <div className="space-y-4">
+          {submitError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
           <Input
             label="Name"
             value={name}
@@ -139,18 +189,19 @@ export function AdminPeoplePage() {
             value={email}
             onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
             placeholder="e.g. pathari@nitc.ac.in"
+            disabled={editId !== null}
           />
           <Select
             label="Role"
             selectedKey={role}
             onSelectionChange={(key) => setRole(String(key))}
             options={[
-              { id: 'faculty_in_charge', label: 'Faculty In-charge' },
-              { id: 'faculty_coordinator', label: 'Faculty Coordinator' },
-              { id: 'staff_incharge', label: 'Staff In-charge' },
-              { id: 'hod', label: 'HOD' },
-              { id: 'admin', label: 'Admin' },
-              { id: 'club', label: 'Club Secretary' }
+              { id: 'FACULTY_IN_CHARGE', label: 'Faculty In-charge' },
+              { id: 'FACULTY_COORDINATOR', label: 'Faculty Coordinator' },
+              { id: 'STAFF_IN_CHARGE', label: 'Staff In-charge' },
+              { id: 'HOD', label: 'HOD' },
+              { id: 'ADMIN', label: 'Admin' },
+              { id: 'CLUB', label: 'Club Secretary' }
             ]}
           />
           <Select
@@ -158,13 +209,16 @@ export function AdminPeoplePage() {
             selectedKey={status}
             onSelectionChange={(key) => setStatus(String(key))}
             options={[
-              { id: 'available', label: 'Available' },
-              { id: 'unavailable', label: 'Unavailable' }
+              { id: 'available', label: 'Active' },
+              { id: 'unavailable', label: 'Inactive' }
             ]}
           />
           <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
             <Button variant="outline" onPress={() => setIsOpen(false)}>Cancel</Button>
-            <Button variant="primary" onPress={handleSave}>Save</Button>
+            <Button variant="primary" onPress={handleSave} isDisabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Save
+            </Button>
           </div>
         </div>
       </Modal>
