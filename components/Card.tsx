@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { Group } from 'react-aria-components';
 
 type CardProps = {
   children: React.ReactNode;
@@ -9,9 +10,9 @@ type CardProps = {
 
 export function Card({ children, className }: CardProps) {
   return (
-    <div className={cn('bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden', className)}>
+    <Group className={cn('bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden block', className)}>
       {children}
-    </div>
+    </Group>
   );
 }
 
@@ -21,18 +22,18 @@ export function StatCard({ title, value, variant = 'default' }: {
   variant?: 'default' | 'danger';
 }) {
   return (
-    <div className={cn(
-      'bg-[#f4d9c6]/50 rounded-2xl p-4 shadow-sm border border-[#e9ccbf]/45 flex-1 min-w-[180px] transition-all',
+    <Group className={cn(
+      'bg-[#f4d9c6]/50 rounded-2xl p-4 shadow-sm border border-[#e9ccbf]/45 flex-1 min-w-[180px] transition-all block',
       'hover:shadow-md hover:border-[#e9ccbf]',
       variant === 'danger' && 'border-red-200 bg-red-50/50'
     )}>
       <p className="text-xs font-semibold uppercase tracking-wider text-[#8d6e63] mb-1">{title}</p>
       <p className={cn(
-        'text-2xl font-bold tracking-tight', 
-        variant === 'danger' ? 'text-[#7a1f32]' : 'text-[#7a1f32]'
+        'text-3xl font-extrabold text-[#7a1f32]',
+        variant === 'danger' && 'text-red-700'
       )}>
         {value}
       </p>
-    </div>
+    </Group>
   );
 }
