@@ -77,7 +77,7 @@ export type Person = {
   id: string;
   name: string;
   email: string;
-  role: 'CLUB' | 'FACULTY_COORDINATOR' | 'STAFF_IN_CHARGE' | 'HOD' | 'FACULTY_IN_CHARGE' | 'ADMIN';
+  role: Role;
   status: 'available' | 'unavailable';
 };
 

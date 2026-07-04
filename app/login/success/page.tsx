@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function LoginSuccessPage() {
   const router = useRouter();
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Empty deps: run exactly once on mount. We access router via ref to avoid
+  // the effect re-running every time Next.js refreshes the router object,
+  // which was causing a double-execution that cleared the redirect timer.
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -40,6 +46,7 @@ export default function LoginSuccessPage() {
 
       localStorage.setItem('perms_logged_in', 'true');
       localStorage.setItem('perms_token', token);
+      localStorage.setItem('perms_user_id', String(payload.userId));
       localStorage.setItem('perms_user_name', payload.name || 'User');
       localStorage.setItem('perms_user_email', payload.email);
       localStorage.setItem('perms_user_role', payload.role || 'CLUB');
@@ -47,7 +54,7 @@ export default function LoginSuccessPage() {
       setStatus('success');
 
       const redirectTimer = setTimeout(() => {
-        router.push('/');
+        routerRef.current.push('/');
       }, 1000);
 
       return () => clearTimeout(redirectTimer);
@@ -58,12 +65,13 @@ export default function LoginSuccessPage() {
       
       // Redirect back to login page with error
       const errorTimer = setTimeout(() => {
-        router.push(`/login?error=${encodeURIComponent(err.message || 'Verification failed')}`);
+        routerRef.current.push(`/login?error=${encodeURIComponent(err.message || 'Verification failed')}`);
       }, 3000);
 
       return () => clearTimeout(errorTimer);
     }
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">

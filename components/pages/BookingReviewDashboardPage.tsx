@@ -4,8 +4,26 @@ import { useEffect, useState } from 'react';
 import { Card, StatCard } from '@/components/Card';
 import { Tabs, TabPanelComponent } from '@/components/Tabs';
 import { BookingCard } from '@/components/BookingCard';
+import { Modal } from '@/components/Modal';
+import { Button } from '@/components/Button';
+import { TextArea } from '@/components/TextArea';
 import { useFetch } from '@/hooks/useFetch';
 import { Booking } from '@/types';
+
+// Roles that are allowed to approve or reject bookings
+const ACTION_ROLES = new Set([
+  'FACULTY_COORDINATOR',
+  'STAFF_IN_CHARGE',
+  'FACULTY_IN_CHARGE',
+  'HOD',
+  'ADMIN',
+]);
+
+function canActOnBookings(): boolean {
+  if (typeof window === 'undefined') return false;
+  const role = localStorage.getItem('perms_user_role')?.toUpperCase() ?? '';
+  return ACTION_ROLES.has(role);
+}
 
 type BookingStatus =
   | 'PENDING_COORDINATOR'
@@ -64,10 +82,23 @@ function toBooking(apiBooking: ApiBooking): Booking {
 
 export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPageProps) {
   const { sendRequest: fetchBookings, isLoading } = useFetch<BookingsResponse>();
-  const { sendRequest: approveBooking } = useFetch<BookingActionResponse>();
-  const { sendRequest: rejectBooking } = useFetch<BookingActionResponse>();
+  const { sendRequest: approveRequest, isLoading: isApproving } = useFetch<BookingActionResponse>();
+  const { sendRequest: rejectRequest, isLoading: isRejecting } = useFetch<BookingActionResponse>();
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const userCanAct = canActOnBookings();
+
+  // ── Approve modal state ──────────────────────────────────────────────────
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [approveTargetId, setApproveTargetId] = useState<string | null>(null);
+  const [approveRemarks, setApproveRemarks] = useState('');
+
+  // ── Reject modal state ───────────────────────────────────────────────────
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReasonError, setRejectReasonError] = useState('');
 
   useEffect(() => {
     fetchBookings('/bookings')
@@ -80,28 +111,71 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
       .catch((err) => setError(err.message || 'Unable to load bookings.'));
   }, [fetchBookings]);
 
-  const handleAction = async (id: string, newStatus: 'approved' | 'rejected') => {
+  // ── Open approve modal ───────────────────────────────────────────────────
+  function openApproveModal(id: string) {
+    setApproveTargetId(id);
+    setApproveRemarks('');
+    setApproveModalOpen(true);
+  }
+
+  // ── Open reject modal ────────────────────────────────────────────────────
+  function openRejectModal(id: string) {
+    setRejectTargetId(id);
+    setRejectReason('');
+    setRejectReasonError('');
+    setRejectModalOpen(true);
+  }
+
+  // ── Submit approve ───────────────────────────────────────────────────────
+  async function handleApproveConfirm() {
+    if (!approveTargetId) return;
+    setError(null);
     try {
-      const endpoint = newStatus === 'approved' ? `/bookings/${id}/approve` : `/bookings/${id}/reject`;
-      const body = newStatus === 'approved' ? { remarks: '' } : { reason: 'Rejected from dashboard.' };
-      const res = newStatus === 'approved'
-        ? await approveBooking(endpoint, { method: 'POST', body })
-        : await rejectBooking(endpoint, { method: 'POST', body });
-
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === id && res && res.data ? toBooking(res.data) : booking
-        )
-      );
-      setError(null);
+      const res = await approveRequest(`/bookings/${approveTargetId}/approve`, {
+        method: 'POST',
+        body: { remarks: approveRemarks.trim() },
+      });
+      if (res?.data) {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === approveTargetId && res.data ? toBooking(res.data) : b))
+        );
+      }
+      setApproveModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to update booking.');
+      setError(err instanceof Error ? err.message : 'Failed to approve booking.');
+      setApproveModalOpen(false);
     }
-  };
+  }
 
-  const pendingRequests = bookings.filter((booking) => booking.status === 'pending');
-  const approvedRequests = bookings.filter((booking) => booking.status === 'approved');
-  const rejectedRequests = bookings.filter((booking) => booking.status === 'rejected');
+  // ── Submit reject ────────────────────────────────────────────────────────
+  async function handleRejectConfirm() {
+    if (!rejectTargetId) return;
+    if (!rejectReason.trim()) {
+      setRejectReasonError('A reason is required to reject a booking.');
+      return;
+    }
+    setRejectReasonError('');
+    setError(null);
+    try {
+      const res = await rejectRequest(`/bookings/${rejectTargetId}/reject`, {
+        method: 'POST',
+        body: { reason: rejectReason.trim() },
+      });
+      if (res?.data) {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === rejectTargetId && res.data ? toBooking(res.data) : b))
+        );
+      }
+      setRejectModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reject booking.');
+      setRejectModalOpen(false);
+    }
+  }
+
+  const pendingRequests = bookings.filter((b) => b.status === 'pending');
+  const approvedRequests = bookings.filter((b) => b.status === 'approved');
+  const rejectedRequests = bookings.filter((b) => b.status === 'rejected');
 
   return (
     <div className="space-y-6">
@@ -133,16 +207,18 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
           <TabPanelComponent id="pending">
             <h3 className="text-base font-bold text-primary mb-4">PENDING REQUESTS</h3>
             {pendingRequests.length === 0 ? (
-              <p className="text-text-muted italic text-sm">{isLoading ? 'Loading requests...' : 'No pending requests.'}</p>
+              <p className="text-text-muted italic text-sm">
+                {isLoading ? 'Loading requests...' : 'No pending requests.'}
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pendingRequests.map((booking) => (
                   <BookingCard
                     key={booking.id}
                     booking={booking}
-                    showActions
-                    onAccept={() => booking.id && handleAction(booking.id, 'approved')}
-                    onReject={() => booking.id && handleAction(booking.id, 'rejected')}
+                    showActions={userCanAct}
+                    onAccept={() => booking.id && openApproveModal(booking.id)}
+                    onReject={() => booking.id && openRejectModal(booking.id)}
                   />
                 ))}
               </div>
@@ -176,6 +252,90 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
           </TabPanelComponent>
         </Tabs>
       </Card>
+
+      {/* ── Approve confirmation modal ───────────────────────────────────── */}
+      <Modal
+        isOpen={approveModalOpen}
+        onOpenChange={(open) => { if (!isApproving) setApproveModalOpen(open); }}
+        title="Approve Booking Request"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            You are about to <span className="font-semibold text-green-700">approve</span> this
+            booking request. It will be forwarded to the next stage in the workflow.
+          </p>
+          <TextArea
+            label="Remarks (optional)"
+            placeholder="Add any remarks or notes for the next handler..."
+            value={approveRemarks}
+            onChange={(e) => setApproveRemarks(e.target.value)}
+          />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setApproveModalOpen(false)}
+              isDisabled={isApproving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="success"
+              size="sm"
+              onPress={handleApproveConfirm}
+              isDisabled={isApproving}
+            >
+              {isApproving ? 'Approving…' : 'Confirm Approve'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Reject confirmation modal ────────────────────────────────────── */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onOpenChange={(open) => { if (!isRejecting) setRejectModalOpen(open); }}
+        title="Reject Booking Request"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            You are about to <span className="font-semibold text-red-700">reject</span> this
+            booking request. Please provide a reason — this will be visible to the club.
+          </p>
+          <div>
+            <TextArea
+              label="Reason for rejection *"
+              placeholder="e.g. Venue not available, clashes with another event..."
+              value={rejectReason}
+              onChange={(e) => {
+                setRejectReason(e.target.value);
+                if (e.target.value.trim()) setRejectReasonError('');
+              }}
+            />
+            {rejectReasonError && (
+              <p className="mt-1 text-xs text-red-600 font-medium">{rejectReasonError}</p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onPress={() => setRejectModalOpen(false)}
+              isDisabled={isRejecting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onPress={handleRejectConfirm}
+              isDisabled={isRejecting}
+            >
+              {isRejecting ? 'Rejecting…' : 'Confirm Reject'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

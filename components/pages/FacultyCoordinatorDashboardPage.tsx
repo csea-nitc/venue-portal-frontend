@@ -1,3 +1,5 @@
+'use client';
+
 import { BookingReviewDashboardPage } from './BookingReviewDashboardPage';
 
 export function FacultyCoordinatorDashboardPage() {

@@ -27,6 +27,7 @@ export function Header({ onMenuPress }: HeaderProps) {
   const handleLogout = () => {
     localStorage.removeItem('perms_logged_in');
     localStorage.removeItem('perms_token');
+    localStorage.removeItem('perms_user_id');
     localStorage.removeItem('perms_user_name');
     localStorage.removeItem('perms_user_email');
     localStorage.removeItem('perms_user_role');
