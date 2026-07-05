@@ -43,6 +43,28 @@ type ApiBooking = {
   createdAt?: string;
   club?: { clubName?: string };
   venue?: { name?: string };
+  currentHandlers?: Array<{
+    handlerId: number;
+    handler?: {
+      userId: number;
+      name: string;
+      email: string;
+      role: string;
+    };
+  }>;
+};
+
+type DashboardBooking = Booking & {
+  rawStatus: BookingStatus;
+  currentHandlers: Array<{
+    handlerId: number;
+    handler?: {
+      userId: number;
+      name: string;
+      email: string;
+      role: string;
+    };
+  }>;
 };
 
 type BookingsResponse = {
@@ -67,7 +89,7 @@ function toUiStatus(status: BookingStatus): Booking['status'] {
   return 'pending';
 }
 
-function toBooking(apiBooking: ApiBooking): Booking {
+function toBooking(apiBooking: ApiBooking): DashboardBooking {
   return {
     id: String(apiBooking.bookingId),
     title: apiBooking.eventName,
@@ -77,7 +99,17 @@ function toBooking(apiBooking: ApiBooking): Booking {
     bookingDate: apiBooking.createdAt ? new Date(apiBooking.createdAt).toLocaleDateString() : '',
     status: toUiStatus(apiBooking.status),
     club: apiBooking.club?.clubName,
+    rawStatus: apiBooking.status,
+    currentHandlers: apiBooking.currentHandlers || [],
   };
+}
+
+function canUserActOnBooking(booking: DashboardBooking): boolean {
+  if (typeof window === 'undefined') return false;
+  const currentUserIdStr = localStorage.getItem('perms_user_id');
+  if (!currentUserIdStr) return false;
+  const currentUserId = Number(currentUserIdStr);
+  return booking.currentHandlers.some((ch) => ch.handlerId === currentUserId);
 }
 
 export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPageProps) {
@@ -85,7 +117,7 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
   const { sendRequest: approveRequest, isLoading: isApproving } = useFetch<BookingActionResponse>();
   const { sendRequest: rejectRequest, isLoading: isRejecting } = useFetch<BookingActionResponse>();
 
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<DashboardBooking[]>([]);
   const [error, setError] = useState<string | null>(null);
   const userCanAct = canActOnBookings();
 
@@ -216,7 +248,7 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
                   <BookingCard
                     key={booking.id}
                     booking={booking}
-                    showActions={userCanAct}
+                    showActions={userCanAct && canUserActOnBooking(booking)}
                     onAccept={() => booking.id && openApproveModal(booking.id)}
                     onReject={() => booking.id && openRejectModal(booking.id)}
                   />

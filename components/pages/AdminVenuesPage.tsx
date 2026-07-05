@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/Button";
 import { StatCard } from "@/components/Card";
 import { Table, TableCell, TableRow } from "@/components/Table";
-import { Plus, Loader2, AlertCircle, Trash2, Edit } from "lucide-react";
+import { Plus, Loader2, AlertCircle, Trash2, Edit, ChevronRight, ChevronDown } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { Input } from "@/components/Input";
 import { Select } from "@/components/Select";
@@ -20,6 +20,8 @@ export function AdminVenuesPage() {
 	} = useFetch();
 	const { isLoading: isSubmitting, sendRequest: saveVenue } = useFetch();
 	const { sendRequest: deleteVenue } = useFetch();
+	const { data: usersData, sendRequest: fetchUsers } = useFetch();
+	const { isLoading: isHandlerAction, sendRequest: runHandlerAction } = useFetch();
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [editId, setEditId] = useState<number | null>(null);
@@ -31,9 +33,14 @@ export function AdminVenuesPage() {
 	const [capacity, setCapacity] = useState("");
 	const [isAvailable, setIsAvailable] = useState(true);
 
+	// Handlers expansion & inline assignment states
+	const [expandedVenueIds, setExpandedVenueIds] = useState<number[]>([]);
+	const [handlerFormState, setHandlerFormState] = useState<Record<number, string>>({});
+
 	useEffect(() => {
 		fetchVenues("/api/admin/venues");
-	}, [fetchVenues]);
+		fetchUsers("/api/admin/users");
+	}, [fetchVenues, fetchUsers]);
 
 	const handleOpenAdd = () => {
 		setEditId(null);
@@ -99,11 +106,62 @@ export function AdminVenuesPage() {
 		}
 	};
 
+	// Inline Handlers logic
+	const toggleVenueExpansion = (venueId: number) => {
+		setExpandedVenueIds((prev) =>
+			prev.includes(venueId) ? prev.filter((id) => id !== venueId) : [...prev, venueId]
+		);
+	};
+
+	const handleAddHandlerInline = async (venueId: number) => {
+		const handlerId = handlerFormState[venueId];
+		if (!handlerId) return;
+
+		const selectedUserObj = users.find((u: any) => String(u.userId) === handlerId);
+		if (!selectedUserObj) return;
+
+		try {
+			await runHandlerAction(`/api/admin/venues/${venueId}/handlers`, {
+				method: "POST",
+				body: {
+					handlerId: parseInt(handlerId),
+					role: selectedUserObj.role,
+				},
+			});
+			setHandlerFormState((prev) => ({ ...prev, [venueId]: "" }));
+			fetchVenues("/api/admin/venues");
+		} catch (err) {
+			console.error("Add handler failed:", err);
+		}
+	};
+
+	const handleRemoveHandlerInline = async (venueId: number, handlerId: number) => {
+		try {
+			await runHandlerAction(`/api/admin/venues/${venueId}/handlers/${handlerId}`, {
+				method: "DELETE",
+			});
+			fetchVenues("/api/admin/venues");
+		} catch (err) {
+			console.error("Remove handler failed:", err);
+		}
+	};
+
 	const venues = (venuesData as any)?.venues || [];
 	const stats = {
 		total: venues.length,
 		available: venues.filter((v: any) => v.isAvailable).length,
 		unavailable: venues.filter((v: any) => !v.isAvailable).length,
+	};
+
+	const users = (usersData as any)?.users || [];
+
+	const getAssignableUsers = (venue: any) => {
+		const assignedHandlerIds = venue?.handlers?.map((h: any) => h.handlerId) || [];
+		return users.filter((u: any) => 
+			(u.role === "STAFF_IN_CHARGE" || u.role === "FACULTY_IN_CHARGE") && 
+			u.isActive && 
+			!assignedHandlerIds.includes(u.userId)
+		);
 	};
 
 	return (
@@ -150,10 +208,12 @@ export function AdminVenuesPage() {
 				) : (
 					<Table
 						headers={[
+							"", // Chevron column
 							"Name",
 							"Type",
 							"Location",
 							"Capacity",
+							"Handlers",
 							"Status",
 							"Actions",
 						]}
@@ -168,59 +228,198 @@ export function AdminVenuesPage() {
 								<TableCell>-</TableCell>
 								<TableCell>-</TableCell>
 								<TableCell>-</TableCell>
+								<TableCell>-</TableCell>
+								<TableCell>-</TableCell>
 							</TableRow>
 						) : (
-							venues.map((venue: any) => (
-								<TableRow key={venue.venueId}>
-									<TableCell className="font-bold text-gray-800">
-										{venue.name}
-									</TableCell>
-									<TableCell>
-										<span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">
-											{venue.venueType}
-										</span>
-									</TableCell>
-									<TableCell className="text-sm">{venue.location}</TableCell>
-									<TableCell className="text-sm font-medium">
-										{venue.capacity}
-									</TableCell>
-									<TableCell>
-										<span
-											className={cn(
-												"px-2 py-0.5 rounded-full text-[10px] font-bold border",
-												venue.isAvailable
-													? "bg-green-50 text-green-700 border-green-200"
-													: "bg-red-50 text-red-700 border-red-200",
-											)}
-										>
-											{venue.isAvailable ? "AVAILABLE" : "MAINTENANCE"}
-										</span>
-									</TableCell>
-									<TableCell>
-										<div className="flex gap-2">
-											<Button
-												size="sm"
-												variant="outline"
-												onPress={() => handleOpenEdit(venue)}
-											>
-												<Edit className="w-3.5 h-3.5" />
-											</Button>
-											<Button
-												size="sm"
-												variant="danger"
-												onPress={() => handleDelete(venue.venueId)}
-											>
-												<Trash2 className="w-3.5 h-3.5" />
-											</Button>
-										</div>
-									</TableCell>
-								</TableRow>
-							))
+							venues.map((venue: any) => {
+								const isExpanded = expandedVenueIds.includes(venue.venueId);
+								const staffCount = venue.handlers?.filter((h: any) => h.role === "STAFF_IN_CHARGE").length || 0;
+								const facultyCount = venue.handlers?.filter((h: any) => h.role === "FACULTY_IN_CHARGE").length || 0;
+								const assignable = getAssignableUsers(venue);
+
+								return (
+									<React.Fragment key={venue.venueId}>
+										<TableRow>
+											<TableCell className="w-10 text-center">
+												<button
+													onClick={() => toggleVenueExpansion(venue.venueId)}
+													className="p-1 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors focus:outline-none"
+												>
+													{isExpanded ? (
+														<ChevronDown className="w-4 h-4" />
+													) : (
+														<ChevronRight className="w-4 h-4" />
+													)}
+												</button>
+											</TableCell>
+											<TableCell className="font-bold text-gray-800">
+												{venue.name}
+											</TableCell>
+											<TableCell>
+												<span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">
+													{venue.venueType}
+												</span>
+											</TableCell>
+											<TableCell className="text-sm">{venue.location}</TableCell>
+											<TableCell className="text-sm font-medium">
+												{venue.capacity}
+											</TableCell>
+											<TableCell className="text-xs font-semibold text-gray-600">
+												<span className="inline-flex gap-1.5">
+													<span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">
+														{facultyCount} Faculty
+													</span>
+													<span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+														{staffCount} Staff
+													</span>
+												</span>
+											</TableCell>
+											<TableCell>
+												<span
+													className={cn(
+														"px-2 py-0.5 rounded-full text-[10px] font-bold border",
+														venue.isAvailable
+															? "bg-green-50 text-green-700 border-green-200"
+															: "bg-red-50 text-red-700 border-red-200",
+													)}
+												>
+													{venue.isAvailable ? "AVAILABLE" : "MAINTENANCE"}
+												</span>
+											</TableCell>
+											<TableCell>
+												<div className="flex gap-2">
+													<Button
+														size="sm"
+														variant="outline"
+														onPress={() => handleOpenEdit(venue)}
+													>
+														<Edit className="w-3.5 h-3.5" />
+													</Button>
+													<Button
+														size="sm"
+														variant="danger"
+														onPress={() => handleDelete(venue.venueId)}
+													>
+														<Trash2 className="w-3.5 h-3.5" />
+													</Button>
+												</div>
+											</TableCell>
+										</TableRow>
+
+										{isExpanded && (
+											<TableRow>
+												<TableCell colSpan={8} className="bg-gray-50/50 p-6 border-t border-b border-gray-100">
+													<div className="w-full space-y-4">
+														<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-150 pb-3">
+															<div>
+																<h4 className="text-sm font-bold text-gray-800">
+																	Manage Handlers
+																</h4>
+																<p className="text-xs text-gray-500">
+																	Assign or remove staff and faculty coordinators.
+																</p>
+															</div>
+
+															{/* Inline Assign Input */}
+															{assignable.length > 0 ? (
+																<div className="flex gap-2 items-end">
+																	<div className="w-64">
+																		<Select
+																			label="Assign New Handler"
+																			selectedKey={handlerFormState[venue.venueId] || ""}
+																			onSelectionChange={(key) =>
+																				setHandlerFormState((prev) => ({
+																					...prev,
+																					[venue.venueId]: key as string,
+																				}))
+																			}
+																			placeholder="Choose a user..."
+																			options={assignable.map((u: any) => ({
+																				id: String(u.userId),
+																				label: `${u.name} (${u.role === "STAFF_IN_CHARGE" ? "Staff" : "Faculty"})`,
+																			}))}
+																		/>
+																	</div>
+																	<Button
+																		variant="primary"
+																		onPress={() => handleAddHandlerInline(venue.venueId)}
+																		isDisabled={!handlerFormState[venue.venueId] || isHandlerAction}
+																		className="h-[38px] px-4 text-xs"
+																	>
+																		{isHandlerAction ? (
+																			<Loader2 className="w-3.5 h-3.5 animate-spin" />
+																		) : (
+																			"Assign"
+																		)}
+																	</Button>
+																</div>
+															) : (
+																<div className="text-xs text-gray-500 italic bg-gray-100 px-3 py-2 rounded-lg border border-gray-200">
+																	All available staff & faculty have been assigned.
+																</div>
+															)}
+														</div>
+
+														<div>
+															{!venue.handlers || venue.handlers.length === 0 ? (
+																<p className="text-sm text-gray-500 italic py-4 text-center">
+																	No handlers assigned to this venue.
+																</p>
+															) : (
+																<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+																	{venue.handlers.map((h: any) => (
+																		<div
+																			key={h.id}
+																			className="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-150 text-xs shadow-sm"
+																		>
+																			<div>
+																				<div className="flex items-center gap-2">
+																					<span className="font-semibold text-gray-700">
+																						{h.user?.name}
+																					</span>
+																					<span className={cn(
+																						"text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase border",
+																						h.role === "STAFF_IN_CHARGE"
+																							? "bg-blue-50 text-blue-700 border-blue-200"
+																							: "bg-amber-50 text-amber-700 border-amber-200"
+																					)}>
+																						{h.role === "STAFF_IN_CHARGE" ? "Staff" : "Faculty"}
+																					</span>
+																				</div>
+																				<span className="text-gray-400 block mt-0.5">
+																					{h.user?.email}
+																				</span>
+																			</div>
+																			<Button
+																				size="sm"
+																				variant="danger"
+																				className="p-1.5 min-w-0 ml-2"
+																				onPress={() =>
+																					handleRemoveHandlerInline(venue.venueId, h.handlerId)
+																				}
+																				isDisabled={isHandlerAction}
+																			>
+																				<Trash2 className="w-3.5 h-3.5" />
+																			</Button>
+																		</div>
+																	))}
+																</div>
+															)}
+														</div>
+													</div>
+												</TableCell>
+											</TableRow>
+										)}
+									</React.Fragment>
+								);
+							})
 						)}
 					</Table>
 				)}
 			</div>
 
+			{/* Create/Edit Venue Details Modal */}
 			<Modal
 				isOpen={isOpen}
 				onOpenChange={setIsOpen}

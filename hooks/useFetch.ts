@@ -46,8 +46,23 @@ export function useFetch<T = unknown>() {
           body: body !== undefined ? JSON.stringify(body) : null,
         };
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-        const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
+        let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+        if (baseUrl.endsWith('/')) {
+          baseUrl = baseUrl.slice(0, -1);
+        }
+        const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+        
+        let fullUrl;
+        if (url.startsWith('http')) {
+          fullUrl = url;
+        } else {
+          if (baseUrl.endsWith('/api') && (normalizedUrl === '/api' || normalizedUrl.startsWith('/api/') || normalizedUrl.startsWith('/api?'))) {
+            const suffix = normalizedUrl.slice(4);
+            fullUrl = `${baseUrl}${suffix}`;
+          } else {
+            fullUrl = `${baseUrl}${normalizedUrl}`;
+          }
+        }
 
         const response = await fetch(fullUrl, fetchOptions);
 

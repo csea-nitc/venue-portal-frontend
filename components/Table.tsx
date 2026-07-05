@@ -48,11 +48,12 @@ export function TableRow({ children }: TableRowProps) {
 type TableCellProps = {
   children: React.ReactNode;
   className?: string;
+  colSpan?: number;
 };
 
-export function TableCell({ children, className }: TableCellProps) {
+export function TableCell({ children, className, colSpan }: TableCellProps) {
   return (
-    <Cell className={cn('px-4 py-3.5 text-sm text-gray-700 outline-none', className)}>
+    <Cell colSpan={colSpan} className={cn('px-4 py-3.5 text-sm text-gray-700 outline-none align-middle', className)}>
       {children}
     </Cell>
   );
