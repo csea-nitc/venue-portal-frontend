@@ -222,7 +222,7 @@ export function BookingReviewDashboardPage({ title }: BookingReviewDashboardPage
         </div>
       )}
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard title="Pending requests" value={isLoading ? '...' : String(pendingRequests.length)} variant="danger" />
         <StatCard title="Approved this month" value={isLoading ? '...' : String(approvedRequests.length)} />
       </div>

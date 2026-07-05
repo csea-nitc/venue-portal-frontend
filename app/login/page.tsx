@@ -48,7 +48,7 @@ export default function LoginPage() {
                 <Compass className="w-3.5 h-3.5" />
                 NITC CSEA Portal
               </span>
-              <h1 className="text-4xl lg:text-6xl font-extrabold text-primary tracking-tight leading-none">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-primary tracking-tight leading-none">
                 PermsPortal
               </h1>
               <p className="text-lg text-text-muted font-medium max-w-xl">

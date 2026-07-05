@@ -166,14 +166,14 @@ export function AdminVenuesPage() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div>
 					<h1 className="text-xl font-bold text-gray-800">Venue Management</h1>
 					<p className="text-xs text-gray-500">
 						Configure department halls, labs, and classrooms
 					</p>
 				</div>
-				<Button variant="primary" size="sm" onPress={handleOpenAdd}>
+				<Button variant="primary" size="sm" onPress={handleOpenAdd} className="self-start sm:self-auto">
 					<Plus className="w-4 h-4 inline mr-1" /> Add Venue
 				</Button>
 			</div>
@@ -311,7 +311,7 @@ export function AdminVenuesPage() {
 											<TableRow>
 												<TableCell colSpan={8} className="bg-gray-50/50 p-6 border-t border-b border-gray-100">
 													<div className="w-full space-y-4">
-														<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-150 pb-3">
+														<div className="flex flex-col gap-4 border-b border-gray-150 pb-3">
 															<div>
 																<h4 className="text-sm font-bold text-gray-800">
 																	Manage Handlers
@@ -323,8 +323,8 @@ export function AdminVenuesPage() {
 
 															{/* Inline Assign Input */}
 															{assignable.length > 0 ? (
-																<div className="flex gap-2 items-end">
-																	<div className="w-64">
+																<div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+																	<div className="w-full sm:w-64">
 																		<Select
 																			label="Assign New Handler"
 																			selectedKey={handlerFormState[venue.venueId] || ""}
@@ -345,7 +345,7 @@ export function AdminVenuesPage() {
 																		variant="primary"
 																		onPress={() => handleAddHandlerInline(venue.venueId)}
 																		isDisabled={!handlerFormState[venue.venueId] || isHandlerAction}
-																		className="h-[38px] px-4 text-xs"
+																		className="h-[38px] px-4 text-xs w-full sm:w-auto"
 																	>
 																		{isHandlerAction ? (
 																			<Loader2 className="w-3.5 h-3.5 animate-spin" />

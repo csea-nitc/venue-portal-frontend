@@ -19,14 +19,14 @@ export function Tabs({ tabs, children, defaultTab }: TabsProps) {
       onSelectionChange={setSelectedKey}
       className="w-full"
     >
-      <TabList className="flex gap-1.5 mb-5 border-b border-gray-100 pb-px">
+      <TabList className="flex gap-1.5 mb-5 border-b border-gray-100 pb-px overflow-x-auto scrollbar-none">
         {tabs.map((tab) => (
           <Tab
             key={tab.id}
             id={tab.id}
             className={({ isSelected }) =>
               cn(
-                'px-4 py-2 text-sm font-medium transition-all relative outline-none cursor-pointer',
+                'px-4 py-2 text-sm font-medium transition-all relative outline-none cursor-pointer whitespace-nowrap shrink-0',
                 isSelected
                   ? 'text-primary font-semibold border-b-2 border-primary'
                   : 'text-gray-500 hover:text-gray-800'

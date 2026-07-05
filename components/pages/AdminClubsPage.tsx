@@ -133,14 +133,14 @@ export function AdminClubsPage() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div>
 					<h1 className="text-xl font-bold text-gray-800">Club Registry</h1>
 					<p className="text-xs text-gray-500">
 						Manage recognized student clubs and their coordinators
 					</p>
 				</div>
-				<Button variant="primary" size="sm" onPress={handleOpenAdd}>
+				<Button variant="primary" size="sm" onPress={handleOpenAdd} className="self-start sm:self-auto">
 					<Plus className="w-4 h-4 inline mr-1" /> Add Club
 				</Button>
 			</div>

@@ -121,19 +121,19 @@ export function AdminPeoplePage() {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 				<div>
 					<h1 className="text-xl font-bold text-gray-800">User Management</h1>
 					<p className="text-xs text-gray-500">
 						Configure roles and permissions for system users
 					</p>
 				</div>
-				<Button variant="outline" size="sm" onPress={handleOpenAdd}>
+				<Button variant="outline" size="sm" onPress={handleOpenAdd} className="self-start sm:self-auto">
 					<Plus className="w-4 h-4 inline mr-1" /> Add User
 				</Button>
 			</div>
 
-			<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
 				<StatCard title="Total Users" value={String(totalUsers)} />
 				<StatCard title="Clubs" value={String(clubCount)} />
 				<StatCard title="Faculty" value={String(facultyCount)} />

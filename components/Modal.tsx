@@ -20,14 +20,14 @@ export function Modal({ isOpen, onOpenChange, title, children, className }: Moda
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       className={({ isEntering, isExiting }) => cn(
-        'fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm flex min-h-full items-center justify-center p-4 text-center',
+        'fixed inset-0 z-50 overflow-y-auto bg-black/40 backdrop-blur-sm flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4 text-center',
         isEntering && 'animate-fade-in',
         isExiting && 'animate-fade-out'
       )}
     >
       <AriaModal
         className={({ isEntering, isExiting }) => cn(
-          'w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all border border-gray-100',
+          'w-full sm:max-w-md transform overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white p-5 sm:p-6 text-left align-middle shadow-xl transition-all border border-gray-100',
           isEntering && 'animate-zoom-in',
           isExiting && 'animate-zoom-out',
           className

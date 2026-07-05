@@ -12,6 +12,22 @@ import { AdminVenuesPage } from "./AdminVenuesPage";
 import { AdminClubsPage } from "./AdminClubsPage";
 import { AdminPeoplePage } from "./AdminPeoplePage";
 
+// Shape of a user returned by GET /api/admin/users
+type ApiUser = {
+	userId: number;
+	email: string;
+	name: string;
+	role: string;
+	profilePicture: string | null;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+};
+
+type UsersResponse = {
+	users: ApiUser[];
+};
+
 type AdminDashboardProps = {
 	activeSection?: string;
 };
@@ -19,6 +35,14 @@ type AdminDashboardProps = {
 export function AdminDashboard({
 	activeSection = "overview",
 }: AdminDashboardProps) {
+	// ── Users data (fetched once for the overview stats) ───────────────────
+	const {
+		data: usersData,
+		isLoading: isLoadingUsers,
+		sendRequest: fetchUsers,
+	} = useFetch<UsersResponse>();
+
+	// ── Audit logs data (fetched when audit section is active) ─────────────
 	const {
 		data: auditLogsData,
 		isLoading: isFetchingLogs,
@@ -27,13 +51,42 @@ export function AdminDashboard({
 
 	const [hodApprovalRequired, setHodApprovalRequired] = useState(true);
 
+	// Fetch users on mount (needed for the overview stat cards)
+	useEffect(() => {
+		fetchUsers("/api/admin/users").catch(() => {
+			// error already captured in useFetch state
+		});
+	}, [fetchUsers]);
+
+	// Fetch audit logs only when that section is active
 	useEffect(() => {
 		if (activeSection === "audit") {
-			fetchLogs("/api/logs");
+			fetchLogs("/api/logs").catch(() => { });
 		}
 	}, [activeSection, fetchLogs]);
 
+	// ── Derive stats from the user list ────────────────────────────────────
+	const users: ApiUser[] = usersData?.users ?? [];
+
+	const totalUsers = users.length;
+	const activeFaculty = users.filter(
+		(u) =>
+			u.isActive &&
+			(u.role === "FACULTY_IN_CHARGE" ||
+				u.role === "FACULTY_COORDINATOR" ||
+				u.role === "HOD"),
+	).length;
+	const activeStaff = users.filter(
+		(u) => u.isActive && u.role === "STAFF_IN_CHARGE",
+	).length;
+	const activeClubs = users.filter(
+		(u) => u.isActive && u.role === "CLUB",
+	).length;
+
 	const logs = (auditLogsData as any)?.data || [];
+
+	// ── Loading placeholder for stat values ────────────────────────────────
+	const statVal = (val: number) => (isLoadingUsers ? "…" : String(val));
 
 	const renderContent = () => {
 		switch (activeSection) {
@@ -49,13 +102,76 @@ export function AdminDashboard({
 							</div>
 						</div>
 
+						{/* ── Stat cards ─────────────────────────────────────────────── */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-							<StatCard title="Total Users" value="45" />
-							<StatCard title="Active Faculty" value="28" />
-							<StatCard title="Pending Requests" value="12" />
-							<StatCard title="System Uptime" value="99.8%" />
+							<StatCard title="Total Users" value={statVal(totalUsers)} />
+							<StatCard title="Active Faculty" value={statVal(activeFaculty)} />
+							<StatCard title="Pending Requests" value='12' />
+							<StatCard title="System Uptime" value='99.8%' />
 						</div>
 
+						{/* ── User breakdown table ────────────────────────────────────── */}
+						<Card className="p-5">
+							<h2 className="text-base font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-100">
+								User Breakdown
+							</h2>
+							{isLoadingUsers ? (
+								<div className="flex justify-center py-8">
+									<Loader2 className="w-8 h-8 animate-spin text-accent" />
+								</div>
+							) : (
+								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-sm">
+									{[
+										{
+											label: "Clubs",
+											count: users.filter((u) => u.role === "CLUB").length,
+											color: "bg-purple-50 border-purple-200 text-purple-700",
+										},
+										{
+											label: "Faculty Coordinators",
+											count: users.filter(
+												(u) => u.role === "FACULTY_COORDINATOR",
+											).length,
+											color: "bg-blue-50 border-blue-200 text-blue-700",
+										},
+										{
+											label: "Faculty In-charge",
+											count: users.filter(
+												(u) => u.role === "FACULTY_IN_CHARGE",
+											).length,
+											color: "bg-indigo-50 border-indigo-200 text-indigo-700",
+										},
+										{
+											label: "Staff In-charge",
+											count: users.filter(
+												(u) => u.role === "STAFF_IN_CHARGE",
+											).length,
+											color: "bg-amber-50 border-amber-200 text-amber-700",
+										},
+										{
+											label: "HODs",
+											count: users.filter((u) => u.role === "HOD").length,
+											color: "bg-green-50 border-green-200 text-green-700",
+										},
+									].map(({ label, count, color }) => (
+										<div
+											key={label}
+											className={cn(
+												"flex flex-col items-center justify-center p-3 rounded-xl border text-center",
+												color,
+											)}
+										>
+											<span className="text-2xl font-extrabold">{count}</span>
+											<span className="text-[11px] font-semibold mt-1 leading-tight">
+												{label}
+											</span>
+										</div>
+									))}
+								</div>
+							)}
+						</Card>
+
+						{/* ── System status ───────────────────────────────────────────── */}
 						<Card className="p-5">
 							<h2 className="text-base font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-100">
 								System Status
@@ -83,19 +199,23 @@ export function AdminDashboard({
 
 								<div>
 									<h3 className="font-semibold text-gray-700 mb-2.5">
-										Today&apos;s Metrics
+										Active Users
 									</h3>
 									<div className="space-y-2">
 										<div className="flex items-center justify-between">
-											<span>Requests Today</span>
+											<span>Active accounts</span>
 											<span className="font-semibold text-primary">
-												8 requests
+												{isLoadingUsers
+													? "…"
+													: `${users.filter((u) => u.isActive).length} / ${totalUsers}`}
 											</span>
 										</div>
 										<div className="flex items-center justify-between">
-											<span>Approvals Today</span>
-											<span className="font-semibold text-green-700">
-												6 approvals
+											<span>Inactive accounts</span>
+											<span className="font-semibold text-gray-500">
+												{isLoadingUsers
+													? "…"
+													: String(users.filter((u) => !u.isActive).length)}
 											</span>
 										</div>
 									</div>
@@ -160,13 +280,13 @@ export function AdminDashboard({
 														className={cn(
 															"px-2 py-0.5 rounded text-[10px] font-bold border",
 															log.action === "APPROVED" &&
-																"bg-green-50 text-green-700 border-green-200",
+															"bg-green-50 text-green-700 border-green-200",
 															log.action === "REJECTED" &&
-																"bg-red-50 text-red-700 border-red-200",
+															"bg-red-50 text-red-700 border-red-200",
 															log.action === "SUBMITTED" &&
-																"bg-blue-50 text-blue-700 border-blue-200",
+															"bg-blue-50 text-blue-700 border-blue-200",
 															log.action === "FORWARDED" &&
-																"bg-amber-50 text-amber-700 border-amber-200",
+															"bg-amber-50 text-amber-700 border-amber-200",
 														)}
 													>
 														{log.action}

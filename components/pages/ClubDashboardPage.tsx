@@ -166,7 +166,7 @@ export function ClubDashboardPage() {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 				<StatCard title="Pending requests" value={String(pendingCount)} />
 				<StatCard title="Approved requests" value={String(approvedCount)} />
 				<StatCard
