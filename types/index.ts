@@ -84,7 +84,7 @@ export type Person = {
 export type Booking = {
   id?: string;
   title: string;
-  status: 'available' | 'unavailable' | 'approved' | 'pending' | 'rejected' | 'forwarded';
+  status: 'PENDING_VENUE_HANDLER' | 'APPROVED' | 'REJECTED' | 'PENDING_COORDINATOR' | 'PENDING_HOD' | 'CANCELLED' | 'WITHDRAWN';
   venue: string;
   startDate: string;
   endDate?: string;
