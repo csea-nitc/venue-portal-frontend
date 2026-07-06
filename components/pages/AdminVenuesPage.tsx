@@ -18,7 +18,7 @@ export function AdminVenuesPage() {
 		error: fetchError,
 		sendRequest: fetchVenues,
 	} = useFetch();
-	const { isLoading: isSubmitting, sendRequest: saveVenue } = useFetch();
+	const { isLoading: isSubmitting, error: submitError, sendRequest: saveVenue, clearError: clearSubmitError } = useFetch();
 	const { sendRequest: deleteVenue } = useFetch();
 	const { data: usersData, sendRequest: fetchUsers } = useFetch();
 	const { isLoading: isHandlerAction, sendRequest: runHandlerAction } = useFetch();
@@ -32,6 +32,7 @@ export function AdminVenuesPage() {
 	const [location, setLocation] = useState("");
 	const [capacity, setCapacity] = useState("");
 	const [isAvailable, setIsAvailable] = useState(true);
+	const [selectedHandlers, setSelectedHandlers] = useState<{ handlerId: number; name: string; role: string }[]>([]);
 
 	// Handlers expansion & inline assignment states
 	const [expandedVenueIds, setExpandedVenueIds] = useState<number[]>([]);
@@ -43,16 +44,19 @@ export function AdminVenuesPage() {
 	}, [fetchVenues, fetchUsers]);
 
 	const handleOpenAdd = () => {
+		clearSubmitError();
 		setEditId(null);
 		setName("");
 		setVenueType("HALL");
 		setLocation("");
 		setCapacity("");
 		setIsAvailable(true);
+		setSelectedHandlers([]);
 		setIsOpen(true);
 	};
 
 	const handleOpenEdit = (venue: any) => {
+		clearSubmitError();
 		setEditId(venue.venueId);
 		setName(venue.name);
 		setVenueType(venue.venueType);
@@ -65,6 +69,11 @@ export function AdminVenuesPage() {
 	const handleSave = async () => {
 		if (!name || !location || !capacity) {
 			alert("Please fill in all required fields.");
+			return;
+		}
+
+		if (!editId && selectedHandlers.length === 0) {
+			alert("Please select at least one venue handler.");
 			return;
 		}
 
@@ -85,7 +94,13 @@ export function AdminVenuesPage() {
 			} else {
 				await saveVenue("/api/admin/venues", {
 					method: "POST",
-					body: payload,
+					body: {
+						...payload,
+						handlers: selectedHandlers.map((h) => ({
+							handlerId: h.handlerId,
+							role: h.role,
+						})),
+					},
 				});
 			}
 			setIsOpen(false);
@@ -163,6 +178,12 @@ export function AdminVenuesPage() {
 			!assignedHandlerIds.includes(u.userId)
 		);
 	};
+
+	const assignableModalUsers = users.filter((u: any) => 
+		(u.role === "STAFF_IN_CHARGE" || u.role === "FACULTY_IN_CHARGE") && 
+		u.isActive && 
+		!selectedHandlers.some((sh) => sh.handlerId === u.userId)
+	);
 
 	return (
 		<div className="space-y-4">
@@ -426,6 +447,12 @@ export function AdminVenuesPage() {
 				title={editId ? "Edit Venue" : "Add New Venue"}
 			>
 				<div className="space-y-4 p-1">
+					{submitError && (
+						<div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2">
+							<AlertCircle className="w-4 h-4 shrink-0" />
+							<span>{submitError}</span>
+						</div>
+					)}
 					<Input
 						label="Venue Name"
 						value={name}
@@ -470,6 +497,64 @@ export function AdminVenuesPage() {
 							Venue is available for booking
 						</label>
 					</div>
+
+					{!editId && (
+						<div className="space-y-2 border-t border-gray-100 pt-4">
+							<label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+								Venue Handlers (At least one required)
+							</label>
+							
+							{selectedHandlers.length > 0 ? (
+								<div className="flex flex-wrap gap-2 mb-2">
+									{selectedHandlers.map((h) => (
+										<div
+											key={h.handlerId}
+											className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 text-xs"
+										>
+											<span className="font-semibold text-gray-700">
+												{h.name} ({h.role === "STAFF_IN_CHARGE" ? "Staff" : "Faculty"})
+											</span>
+											<button
+												type="button"
+												onClick={() => setSelectedHandlers((prev) => prev.filter((sh) => sh.handlerId !== h.handlerId))}
+												className="text-gray-400 hover:text-red-500 transition-colors focus:outline-none font-bold text-sm"
+											>
+												&times;
+											</button>
+										</div>
+									))}
+								</div>
+							) : (
+								<div className="text-xs text-red-500 font-medium italic mb-2">
+									No handlers selected yet. At least one is required.
+								</div>
+							)}
+
+							<Select
+								placeholder="Select a handler to add..."
+								options={assignableModalUsers.map((u: any) => ({
+									id: String(u.userId),
+									label: `${u.name} (${u.role === "STAFF_IN_CHARGE" ? "Staff" : "Faculty"})`,
+								}))}
+								onSelectionChange={(key) => {
+									const selectedUserObj = users.find((u: any) => String(u.userId) === key);
+									if (selectedUserObj) {
+										setSelectedHandlers((prev) => {
+											if (prev.some((sh) => sh.handlerId === selectedUserObj.userId)) return prev;
+											return [
+												...prev,
+												{
+													handlerId: selectedUserObj.userId,
+													name: selectedUserObj.name,
+													role: selectedUserObj.role,
+												},
+											];
+										});
+									}
+								}}
+							/>
+						</div>
+					)}
 
 					<div className="flex gap-3 pt-4">
 						<Button

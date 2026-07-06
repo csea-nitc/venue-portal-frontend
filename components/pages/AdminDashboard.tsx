@@ -110,67 +110,7 @@ export function AdminDashboard({
 							<StatCard title="System Uptime" value='99.8%' />
 						</div>
 
-						{/* ── User breakdown table ────────────────────────────────────── */}
-						<Card className="p-5">
-							<h2 className="text-base font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-100">
-								User Breakdown
-							</h2>
-							{isLoadingUsers ? (
-								<div className="flex justify-center py-8">
-									<Loader2 className="w-8 h-8 animate-spin text-accent" />
-								</div>
-							) : (
-								<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-sm">
-									{[
-										{
-											label: "Clubs",
-											count: users.filter((u) => u.role === "CLUB").length,
-											color: "bg-purple-50 border-purple-200 text-purple-700",
-										},
-										{
-											label: "Faculty Coordinators",
-											count: users.filter(
-												(u) => u.role === "FACULTY_COORDINATOR",
-											).length,
-											color: "bg-blue-50 border-blue-200 text-blue-700",
-										},
-										{
-											label: "Faculty In-charge",
-											count: users.filter(
-												(u) => u.role === "FACULTY_IN_CHARGE",
-											).length,
-											color: "bg-indigo-50 border-indigo-200 text-indigo-700",
-										},
-										{
-											label: "Staff In-charge",
-											count: users.filter(
-												(u) => u.role === "STAFF_IN_CHARGE",
-											).length,
-											color: "bg-amber-50 border-amber-200 text-amber-700",
-										},
-										{
-											label: "HODs",
-											count: users.filter((u) => u.role === "HOD").length,
-											color: "bg-green-50 border-green-200 text-green-700",
-										},
-									].map(({ label, count, color }) => (
-										<div
-											key={label}
-											className={cn(
-												"flex flex-col items-center justify-center p-3 rounded-xl border text-center",
-												color,
-											)}
-										>
-											<span className="text-2xl font-extrabold">{count}</span>
-											<span className="text-[11px] font-semibold mt-1 leading-tight">
-												{label}
-											</span>
-										</div>
-									))}
-								</div>
-							)}
-						</Card>
-
+						
 						{/* ── System status ───────────────────────────────────────────── */}
 						<Card className="p-5">
 							<h2 className="text-base font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-100">

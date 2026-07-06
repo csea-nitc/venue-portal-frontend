@@ -22,6 +22,7 @@ export function AdminClubsPage() {
 		isLoading: isSubmitting,
 		error: submitError,
 		sendRequest: saveClub,
+		clearError: clearSubmitError,
 	} = useFetch();
 	const { sendRequest: deleteClub } = useFetch();
 	const { data: usersData, sendRequest: fetchUsers } = useFetch();
@@ -31,6 +32,7 @@ export function AdminClubsPage() {
 
 	// Form states
 	const [clubName, setClubName] = useState("");
+	const [secretaryUserId, setSecretaryUserId] = useState("");
 	const [secretaryName, setSecretaryName] = useState("");
 	const [secretaryEmail, setSecretaryEmail] = useState("");
 	const [contactNumber, setContactNumber] = useState("");
@@ -42,8 +44,10 @@ export function AdminClubsPage() {
 	}, [fetchClubs, fetchUsers]);
 
 	const handleOpenAdd = () => {
+		clearSubmitError();
 		setEditId(null);
 		setClubName("");
+		setSecretaryUserId("");
 		setSecretaryName("");
 		setSecretaryEmail("");
 		setContactNumber("");
@@ -52,8 +56,10 @@ export function AdminClubsPage() {
 	};
 
 	const handleOpenEdit = (club: any) => {
+		clearSubmitError();
 		setEditId(club.clubId);
 		setClubName(club.clubName);
+		setSecretaryUserId(String(club.clubId));
 		setSecretaryName(club.secretaryName || "");
 		setSecretaryEmail(club.secretaryEmail || "");
 		setContactNumber(club.contactNumber || "");
@@ -64,6 +70,7 @@ export function AdminClubsPage() {
 	const handleSave = async () => {
 		if (
 			!clubName ||
+			!secretaryUserId ||
 			!secretaryName ||
 			!secretaryEmail ||
 			!contactNumber ||
@@ -76,6 +83,7 @@ export function AdminClubsPage() {
 		try {
 			const payload = {
 				clubName,
+				secretaryUserId: parseInt(secretaryUserId),
 				secretaryName,
 				secretaryEmail,
 				contactNumber,
@@ -117,8 +125,19 @@ export function AdminClubsPage() {
 		active: clubs.filter((c: any) => c.isActive !== false).length,
 	};
 
+	const users = (usersData as any)?.users || [];
+	const clubUsers = users.filter((u: any) => u.role === "CLUB" && u.isActive);
+	const assignedClubUserIds = clubs.map((c: any) => c.clubId);
+	const availableClubUsers = clubUsers.filter(
+		(u: any) => !assignedClubUserIds.includes(u.userId) || u.userId === parseInt(secretaryUserId || "0"),
+	);
+	const availableClubOptions = availableClubUsers.map((u: any) => ({
+		id: String(u.userId),
+		label: `${u.name} (${u.email})`,
+	}));
+
 	// Filter institutional users for coordinator selection (non-club, non-admin, e.g. faculties/staffs)
-	const facultyUsers = ((usersData as any)?.users || []).filter(
+	const facultyUsers = users.filter(
 		(u: any) =>
 			u.role === "FACULTY_COORDINATOR" ||
 			u.role === "FACULTY_IN_CHARGE" ||
@@ -269,23 +288,39 @@ export function AdminClubsPage() {
 						onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
 						placeholder="e.g. CSEA"
 					/>
-					<Input
-						label="Secretary Name"
-						value={secretaryName}
-						onChange={(e) =>
-							setSecretaryName((e.target as HTMLInputElement).value)
-						}
-						placeholder="e.g. John Doe"
+					<Select
+						label="Club Secretary Account"
+						selectedKey={secretaryUserId}
+						onSelectionChange={(key) => {
+							setSecretaryUserId(key);
+							const selectedUser = users.find((u: any) => String(u.userId) === key);
+							if (selectedUser) {
+								setSecretaryName(selectedUser.name);
+								setSecretaryEmail(selectedUser.email);
+							} else {
+								setSecretaryName("");
+								setSecretaryEmail("");
+							}
+						}}
+						options={availableClubOptions}
+						placeholder="Select secretary account"
 					/>
-					<Input
-						label="Secretary Email"
-						type="email"
-						value={secretaryEmail}
-						onChange={(e) =>
-							setSecretaryEmail((e.target as HTMLInputElement).value)
-						}
-						placeholder="e.g. secretary@nitc.ac.in"
-					/>
+					{secretaryUserId && (
+						<>
+							<Input
+								label="Secretary Name"
+								value={secretaryName}
+								disabled
+								placeholder="Secretary Name"
+							/>
+							<Input
+								label="Secretary Email"
+								value={secretaryEmail}
+								disabled
+								placeholder="Secretary Email"
+							/>
+						</>
+					)}
 					<Input
 						label="Contact Number"
 						value={contactNumber}

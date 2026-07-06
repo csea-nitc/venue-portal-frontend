@@ -55,20 +55,30 @@ export function Select({
         className="z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 overflow-hidden transition-all"
       >
         <ListBox className="outline-none p-1">
-          {options.map((opt) => (
+          {options.length === 0 ? (
             <ListBoxItem
-              id={opt.id}
-              key={opt.id}
-              textValue={opt.label}
-              className={({ isFocused, isSelected, isHovered }) => cn(
-                'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',
-                (isFocused || isHovered) && 'bg-card/50 text-primary',
-                isSelected && 'bg-primary text-white'
-              )}
+              id="none"
+              isDisabled
+              className="px-3 py-2 rounded-lg text-sm text-gray-400 outline-none font-medium italic"
             >
-              {opt.label}
+              Nothing to select
             </ListBoxItem>
-          ))}
+          ) : (
+            options.map((opt) => (
+              <ListBoxItem
+                id={opt.id}
+                key={opt.id}
+                textValue={opt.label}
+                className={({ isFocused, isSelected, isHovered }) => cn(
+                  'px-3 py-2 rounded-lg cursor-pointer text-sm text-gray-900 outline-none transition-colors font-medium',
+                  (isFocused || isHovered) && 'bg-card/50 text-primary',
+                  isSelected && 'bg-primary text-white'
+                )}
+              >
+                {opt.label}
+              </ListBoxItem>
+            ))
+          )}
         </ListBox>
       </Popover>
     </AriaSelect>

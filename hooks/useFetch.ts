@@ -81,11 +81,20 @@ export function useFetch<T = unknown>() {
             return Promise.reject(new Error('Session expired'));
           }
 
-          throw new Error(
-            responseData?.message ||
-            responseData?.error ||
-            `Request failed with status ${response.status}`
-          );
+          let errMsg = responseData?.message || responseData?.error || `Request failed with status ${response.status}`;
+          if (responseData && (responseData as any).details && response.status < 500) {
+            if (Array.isArray((responseData as any).details)) {
+              const detailMsgs = (responseData as any).details.map((issue: any) => {
+                const pathStr = issue.path ? issue.path.filter((p: any) => p !== 'body').join('.') : '';
+                return `${pathStr ? pathStr + ': ' : ''}${issue.message}`;
+              });
+              errMsg = `${errMsg} (${detailMsgs.join(', ')})`;
+            } else if (typeof (responseData as any).details === 'string') {
+              errMsg = `${errMsg}: ${(responseData as any).details}`;
+            }
+          }
+
+          throw new Error(errMsg);
         }
 
         const data = responseData as T;
