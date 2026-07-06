@@ -38,38 +38,29 @@ export function ClubDashboardPage() {
 		try {
 			const bookingsRes: any = await getBookings("/api/bookings");
 			if (bookingsRes && bookingsRes.success) {
-				const mapped = (bookingsRes as any).data.map((b: any) => {
-					let mappedStatus: "pending" | "approved" | "rejected" = "pending";
-					if (b.status === "APPROVED") {
-						mappedStatus = "approved";
-					} else if (b.status === "REJECTED") {
-						mappedStatus = "rejected";
-					}
+				const formatDate = (dateStr: string) => {
+					const d = new Date(dateStr);
+					const pad = (n: number) => String(n).padStart(2, "0");
+					return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+				};
 
-					const formatDate = (dateStr: string) => {
-						const d = new Date(dateStr);
-						const pad = (n: number) => String(n).padStart(2, "0");
-						return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-					};
+				const formatOnlyDate = (dateStr: string) => {
+					const d = new Date(dateStr);
+					const pad = (n: number) => String(n).padStart(2, "0");
+					return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
+				};
 
-					const formatOnlyDate = (dateStr: string) => {
-						const d = new Date(dateStr);
-						const pad = (n: number) => String(n).padStart(2, "0");
-						return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
-					};
-
-					return {
-						id: String(b.bookingId),
-						title: b.eventName,
-						venue: b.venue?.name || "Unknown Venue",
-						startDate: formatDate(b.eventStart),
-						endDate: formatDate(b.eventEnd),
-						bookingDate: formatOnlyDate(b.createdAt),
-						status: mappedStatus,
-						club: b.club?.clubName || "CSEA",
-						subject: b.remarks || "No description provided",
-					};
-				});
+				const mapped = (bookingsRes as any).data.map((b: any) => ({
+					id: String(b.bookingId),
+					title: b.eventName,
+					venue: b.venue?.name || "Unknown Venue",
+					startDate: formatDate(b.eventStart),
+					endDate: formatDate(b.eventEnd),
+					bookingDate: formatOnlyDate(b.createdAt),
+					status: b.status as Booking["status"],
+					club: b.club?.clubName || "CSEA",
+					subject: b.remarks || "No description provided",
+				}));
 				setBookings(mapped);
 			}
 		} catch (err) {
@@ -144,9 +135,11 @@ export function ClubDashboardPage() {
 	};
 
 	// Stat computations
-	const approvedCount = bookings.filter((b) => b.status === "approved").length;
-	const pendingCount = bookings.filter((b) => b.status === "pending").length;
-	const rejectedCount = bookings.filter((b) => b.status === "rejected").length;
+	const approvedCount = bookings.filter((b) => b.status === "APPROVED").length;
+	const pendingCount = bookings.filter((b) =>
+		["PENDING_VENUE_HANDLER", "PENDING_COORDINATOR", "PENDING_HOD"].includes(b.status)
+	).length;
+	const rejectedCount = bookings.filter((b) => b.status === "REJECTED").length;
 
 	const selectedVenueName =
 		venues.find((v: any) => String(v.venueId) === venue)?.name ||
@@ -224,7 +217,9 @@ export function ClubDashboardPage() {
 						)}
 					</TabPanelComponent>
 					<TabPanelComponent id="pending">
-						{bookings.filter((b) => b.status === "pending").length === 0 ? (
+						{bookings.filter((b) =>
+							["PENDING_VENUE_HANDLER", "PENDING_COORDINATOR", "PENDING_HOD"].includes(b.status)
+						).length === 0 ? (
 							<div className="text-center py-8 text-gray-500 font-medium">
 								No pending booking requests found.
 							</div>
@@ -240,7 +235,9 @@ export function ClubDashboardPage() {
 								]}
 							>
 								{bookings
-									.filter((b) => b.status === "pending")
+									.filter((b) =>
+										["PENDING_VENUE_HANDLER", "PENDING_COORDINATOR", "PENDING_HOD"].includes(b.status)
+									)
 									.map((booking) => (
 										<TableRow key={booking.id}>
 											<TableCell className="font-semibold">
@@ -259,7 +256,7 @@ export function ClubDashboardPage() {
 						)}
 					</TabPanelComponent>
 					<TabPanelComponent id="approved">
-						{bookings.filter((b) => b.status === "approved").length === 0 ? (
+						{bookings.filter((b) => b.status === "APPROVED").length === 0 ? (
 							<div className="text-center py-8 text-gray-500 font-medium">
 								No approved booking requests found.
 							</div>
@@ -275,7 +272,7 @@ export function ClubDashboardPage() {
 								]}
 							>
 								{bookings
-									.filter((b) => b.status === "approved")
+									.filter((b) => b.status === "APPROVED")
 									.map((booking) => (
 										<TableRow key={booking.id}>
 											<TableCell className="font-semibold">
@@ -294,7 +291,7 @@ export function ClubDashboardPage() {
 						)}
 					</TabPanelComponent>
 					<TabPanelComponent id="rejected">
-						{bookings.filter((b) => b.status === "rejected").length === 0 ? (
+						{bookings.filter((b) => b.status === "REJECTED").length === 0 ? (
 							<div className="text-center py-8 text-gray-500 font-medium">
 								No rejected booking requests found.
 							</div>
@@ -310,7 +307,7 @@ export function ClubDashboardPage() {
 								]}
 							>
 								{bookings
-									.filter((b) => b.status === "rejected")
+									.filter((b) => b.status === "REJECTED")
 									.map((booking) => (
 										<TableRow key={booking.id}>
 											<TableCell className="font-semibold">

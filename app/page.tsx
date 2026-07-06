@@ -8,12 +8,11 @@ export default function Home() {
   const router = useRouter();
   useEffect(() => {
     const loggedIn = localStorage.getItem('perms_logged_in');
+    const role = localStorage.getItem('perms_user_role');
     if (!loggedIn) {
       router.push('/login');
       return;
     }
-
-    const role = localStorage.getItem('perms_user_role');
 
     if (role) {
       const normalizedRole = role.toUpperCase();

@@ -60,22 +60,49 @@ export function TableCell({ children, className, colSpan }: TableCellProps) {
 }
 
 type StatusBadgeProps = {
-  status: 'available' | 'unavailable' | 'approved' | 'pending' | 'rejected' | 'forwarded';
+  status:
+    | 'available'
+    | 'unavailable'
+    | 'forwarded'
+    | 'PENDING_VENUE_HANDLER'
+    | 'PENDING_COORDINATOR'
+    | 'PENDING_HOD'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'CANCELLED'
+    | 'WITHDRAWN';
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const colors = {
+  const colors: Record<StatusBadgeProps['status'], string> = {
     available: 'bg-green-50 text-green-700 border-green-200',
     unavailable: 'bg-red-50 text-red-700 border-red-200',
-    approved: 'bg-green-50 text-green-700 border-green-200',
-    pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    rejected: 'bg-red-50 text-red-700 border-red-200',
     forwarded: 'bg-blue-50 text-blue-700 border-blue-200',
+    APPROVED: 'bg-green-50 text-green-700 border-green-200',
+    PENDING_VENUE_HANDLER: 'bg-amber-50 text-amber-700 border-amber-200',
+    PENDING_COORDINATOR: 'bg-amber-50 text-amber-700 border-amber-200',
+    PENDING_HOD: 'bg-amber-50 text-amber-700 border-amber-200',
+    REJECTED: 'bg-red-50 text-red-700 border-red-200',
+    CANCELLED: 'bg-gray-50 text-gray-600 border-gray-200',
+    WITHDRAWN: 'bg-gray-50 text-gray-600 border-gray-200',
+  };
+
+  const labels: Record<StatusBadgeProps['status'], string> = {
+    available: 'Available',
+    unavailable: 'Unavailable',
+    forwarded: 'Forwarded',
+    APPROVED: 'Approved',
+    PENDING_VENUE_HANDLER: 'Pending (Venue)',
+    PENDING_COORDINATOR: 'Pending (Coordinator)',
+    PENDING_HOD: 'Pending (HOD)',
+    REJECTED: 'Rejected',
+    CANCELLED: 'Cancelled',
+    WITHDRAWN: 'Withdrawn',
   };
 
   return (
     <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold border inline-flex items-center', colors[status])}>
-      {status}
+      {labels[status]}
     </span>
   );
 }

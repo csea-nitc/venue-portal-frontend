@@ -45,12 +45,6 @@ type BookingReviewDashboardPageProps = {
   userId?: string | null;
 };
 
-function toUiStatus(status: BookingStatus): Booking['status'] {
-  if (status === 'APPROVED') return 'approved';
-  if (status === 'REJECTED') return 'rejected';
-  return 'pending';
-}
-
 function toBooking(apiBooking: ApiBooking): Booking {
   return {
     id: String(apiBooking.bookingId),
@@ -59,7 +53,7 @@ function toBooking(apiBooking: ApiBooking): Booking {
     startDate: new Date(apiBooking.eventStart).toLocaleString(),
     endDate: new Date(apiBooking.eventEnd).toLocaleString(),
     bookingDate: apiBooking.createdAt ? new Date(apiBooking.createdAt).toLocaleDateString() : '',
-    status: toUiStatus(apiBooking.status),
+    status: apiBooking.status,
     club: apiBooking.club?.clubName,
   };
 }
@@ -78,13 +72,7 @@ export function BookingReviewDashboardPage({ title, userId }: BookingReviewDashb
       ? `/bookings/${encodeURIComponent(userId)}`
       : '/bookings';
 
-    fetchBookings(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    })
+    fetchBookings(url, { method: 'GET' })
       .then((res) => {
         if (res) {
           setBookings((res.data || []).map(toBooking));

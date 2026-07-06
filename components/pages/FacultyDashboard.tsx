@@ -8,17 +8,16 @@ import { useFetch } from '@/hooks/useFetch';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 export function FacultyDashboard() {
-  const { data: bookingsData, isLoading: isFetching, error: fetchError, sendRequest: fetchBookings } = useFetch();
+  const { data: bookingsData, isLoading: isFetching, error: fetchError, sendRequest: fetchBookings } = useFetch<{ success: boolean; data: any[] }>();
   const { isLoading: isSubmitting, sendRequest: submitAction } = useFetch();
 
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [remarks, setRemarks] = useState('');
-
+  const userId = localStorage.getItem("perms_user_id");
   useEffect(() => {
-    fetchBookings('/api/bookings', {
-      method: 'POST',
-      body: { userId: '1' }
+    fetchBookings(`/bookings/${userId}`, {
+      method: 'GET',
     });
   }, [fetchBookings]);
 
