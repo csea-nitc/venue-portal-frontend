@@ -64,15 +64,14 @@ export function BookingReviewDashboardPage({ title, userId }: BookingReviewDashb
   const { sendRequest: rejectBooking } = useFetch<BookingActionResponse>();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // GET /api/bookings is filtered server-side by the bearer token (role + userId).
-    // The userId from localStorage is included as a query param for reference only.
-    const url = userId
-      ? `/bookings/${encodeURIComponent(userId)}`
-      : '/bookings';
+    // GET /api/bookings — filtering is done server-side via the bearer token.
+    const role = localStorage.getItem('perms_user_role');
+    setUserRole(role);
 
-    fetchBookings(url, { method: 'GET' })
+    fetchBookings('/bookings', { method: 'GET' })
       .then((res) => {
         if (res) {
           setBookings((res.data || []).map(toBooking));
@@ -101,7 +100,9 @@ export function BookingReviewDashboardPage({ title, userId }: BookingReviewDashb
     }
   };
 
-  const pendingRequests = bookings.filter((booking) => booking.status === 'PENDING_VENUE_HANDLER' || booking.status === 'PENDING_COORDINATOR' || booking.status === 'PENDING_HOD');
+  const pendingRequests = bookings.filter((booking) =>
+    userRole ? booking.status === ('PENDING_' + userRole.toUpperCase() as Booking['status']) : false
+  );
   const approvedRequests = bookings.filter((booking) => booking.status === 'APPROVED');
   const rejectedRequests = bookings.filter((booking) => booking.status === 'REJECTED');
 
