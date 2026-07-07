@@ -364,8 +364,8 @@ export function ClubDashboardPage() {
 					/>
 
 					{/* Selected Date-Time display */}
-					<div className="bg-[#f4d9c6]/20 border border-[#e9ccbf]/40 p-4 rounded-xl text-sm">
-						<span className="font-semibold text-[#7a1f32]">
+					<div className="bg-card/20 border border-card-header/40 p-4 rounded-xl text-sm">
+						<span className="font-semibold text-primary">
 							Selected Schedule:{" "}
 						</span>
 						<span className="text-gray-700">{selectedRangeText}</span>

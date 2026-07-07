@@ -15,12 +15,12 @@ export function Table({ headers, children, className, label = 'Data Table' }: Ta
     <div className={cn('bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden', className)}>
       <div className="overflow-x-auto">
         <AriaTable aria-label={label} className="w-full border-collapse">
-          <TableHeader className="bg-[#e9ccbf]/30 border-b border-gray-150">
+          <TableHeader className="bg-card-header/30 border-b border-gray-150">
             {headers.map((header, idx) => (
               <Column
                 key={idx}
                 isRowHeader={idx === 0}
-                className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#8d6e63] text-left outline-none"
+                className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-text-muted text-left outline-none"
               >
                 {header}
               </Column>

@@ -289,7 +289,7 @@ export function AvailabilityGrid({
                     
                     let bgClass = getCellColor(status);
                     if (isSelected) {
-                      bgClass = 'bg-[#7a1f32] text-white font-bold ring-1 ring-offset-1 ring-[#7a1f32]';
+                      bgClass = 'bg-primary text-white font-bold ring-1 ring-offset-1 ring-primary';
                     }
 
                     return (
@@ -333,7 +333,7 @@ export function AvailabilityGrid({
           <span className="text-sm font-semibold text-text-muted">your booking</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-[#7a1f32]" />
+          <div className="w-5 h-5 rounded-md bg-primary" />
           <span className="text-sm font-semibold text-text-muted">your selection</span>
         </div>
       </div>

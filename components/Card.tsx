@@ -23,13 +23,13 @@ export function StatCard({ title, value, variant = 'default' }: {
 }) {
   return (
     <Group className={cn(
-      'bg-[#f4d9c6]/50 rounded-2xl p-4 shadow-sm border border-[#e9ccbf]/45 transition-all block',
-      'hover:shadow-md hover:border-[#e9ccbf]',
+      'bg-card/50 rounded-2xl p-4 shadow-sm border border-card-header/45 transition-all block',
+      'hover:shadow-md hover:border-card-header',
       variant === 'danger' && 'border-red-200 bg-red-50/50'
     )}>
-      <p className="text-xs font-semibold uppercase tracking-wider text-[#8d6e63] mb-1">{title}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1">{title}</p>
       <p className={cn(
-        'text-2xl sm:text-3xl font-extrabold text-[#7a1f32]',
+        'text-2xl sm:text-3xl font-extrabold text-primary',
         variant === 'danger' && 'text-red-700'
       )}>
         {value}

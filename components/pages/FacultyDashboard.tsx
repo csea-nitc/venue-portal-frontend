@@ -14,11 +14,13 @@ export function FacultyDashboard() {
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [remarks, setRemarks] = useState('');
-  const userId = localStorage.getItem("perms_user_id");
   useEffect(() => {
-    fetchBookings(`/bookings/${userId}`, {
-      method: 'GET',
-    });
+    const userId = typeof window !== 'undefined' ? localStorage.getItem("perms_user_id") : null;
+    if (userId) {
+      fetchBookings(`/bookings/${userId}`, {
+        method: 'GET',
+      });
+    }
   }, [fetchBookings]);
 
   const handleAction = (request: any, actionType: 'approve' | 'reject') => {
