@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminDashboard } from '@/components/pages/AdminDashboard';
 import { getStoredRoles, hasRole } from '@/lib/utils';
+import { getValidAccessToken, clearAuthTokens } from '@/lib/auth';
 
 type AuthStatus = 'checking' | 'authorized' | 'unauthorized';
 
@@ -17,23 +18,31 @@ export default function AdminPage() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>('checking');
 
   useEffect(() => {
-    let authTimer: ReturnType<typeof setTimeout> | undefined;
-    const loggedIn = localStorage.getItem('perms_logged_in');
-    const token = localStorage.getItem('perms_token');
-    const roles = getStoredRoles();
+    let isMounted = true;
 
-    if (!loggedIn || !token || roles.length === 0) {
-      authTimer = setTimeout(() => setAuthStatus('unauthorized'), 0);
-      router.replace('/login');
-    } else if (!hasRole(roles, 'ADMIN')) {
-      authTimer = setTimeout(() => setAuthStatus('unauthorized'), 0);
-      router.replace('/');
-    } else {
-      authTimer = setTimeout(() => setAuthStatus('authorized'), 0);
+    async function checkAuth() {
+      const loggedIn = localStorage.getItem('perms_logged_in');
+      const token = await getValidAccessToken();
+      const roles = getStoredRoles();
+
+      if (!isMounted) return;
+
+      if (!loggedIn || !token || roles.length === 0) {
+        clearAuthTokens();
+        setAuthStatus('unauthorized');
+        router.replace('/login');
+      } else if (!hasRole(roles, 'ADMIN')) {
+        setAuthStatus('unauthorized');
+        router.replace('/');
+      } else {
+        setAuthStatus('authorized');
+      }
     }
 
+    checkAuth();
+
     return () => {
-      if (authTimer) clearTimeout(authTimer);
+      isMounted = false;
     };
   }, [router]);
 

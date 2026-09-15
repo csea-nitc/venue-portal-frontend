@@ -7,6 +7,7 @@ import { BookingCard } from '@/components/BookingCard';
 import { useFetch } from '@/hooks/useFetch';
 import { Booking } from '@/types';
 import { getStoredRoles } from '@/lib/utils';
+import { VenueHandlerCalendar } from '@/components/VenueHandlerCalendar';
 
 type BookingStatus =
   | 'PENDING_COORDINATOR'
@@ -88,6 +89,7 @@ export function BookingReviewDashboardPage({ title, userId, role }: BookingRevie
   const [bookings, setBookings] = useState<ReviewBooking[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [userRoles] = useState<string[]>(() => getStoredRoles());
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   useEffect(() => {
     // GET /api/bookings — filtering is done server-side via the bearer token.
@@ -130,6 +132,8 @@ export function BookingReviewDashboardPage({ title, userId, role }: BookingRevie
         })
       );
 
+      // Trigger calendar reload to keep grid completely in sync
+      setRefreshTrigger((prev) => prev + 1);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update booking.');
@@ -170,10 +174,25 @@ export function BookingReviewDashboardPage({ title, userId, role }: BookingRevie
         <StatCard title="Approved this month" shortTitle="Approved" value={isLoading ? '...' : String(approvedRequests.length)} />
       </div>
 
+      {/* Venue Calendar as its own separate box below stat cards */}
+      <Card className="p-6">
+        <div className="mb-5">
+          <h3 className="text-base font-extrabold text-[#701A1E] tracking-wider">VENUE SCHEDULE & AVAILABILITY</h3>
+          <p className="text-xs text-text-muted mt-0.5">Interactive visual calendar showing booked slots, status color-coding, and one-click request review.</p>
+        </div>
+        <VenueHandlerCalendar
+          userRole={role}
+          userId={userId || (typeof window !== 'undefined' ? localStorage.getItem('perms_user_id') : null)}
+          onBookingAction={handleAction}
+          refreshTrigger={refreshTrigger}
+        />
+      </Card>
+
+      {/* Requests Tabs Box */}
       <Card className="p-6">
         <Tabs
           tabs={[
-            { id: 'pending', label: 'Pending' },
+            { id: 'pending', label: 'Pending Requests' },
             { id: 'approved', label: 'Approved' },
             { id: 'rejected', label: 'Rejected' },
           ]}
@@ -184,38 +203,16 @@ export function BookingReviewDashboardPage({ title, userId, role }: BookingRevie
             {pendingRequests.length === 0 ? (
               <p className="text-text-muted italic text-sm">{isLoading ? 'Loading requests...' : 'No pending requests.'}</p>
             ) : (
-              <div className="space-y-6">
-                {pendingOnMeRequests.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[#701A1E]">Awaiting your action</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {pendingOnMeRequests.map((booking) => (
-                        <BookingCard
-                          key={booking.id}
-                          booking={booking}
-                          showActions
-                          onAccept={() => booking.id && handleAction(booking.id, 'approved')}
-                          onReject={() => booking.id && handleAction(booking.id, 'rejected')}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {pendingOnMeRequests.length > 0 && pendingElsewhereRequests.length > 0 && (
-                  <div className="border-t-2 border-dotted border-[#7A1F32]/30" />
-                )}
-
-                {pendingElsewhereRequests.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending at other stage</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {pendingElsewhereRequests.map((booking) => (
-                        <BookingCard key={booking.id} booking={booking} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {pendingRequests.map((booking) => (
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    showActions={booking.pendingOnMe}
+                    onAccept={() => booking.id && handleAction(booking.id, 'approved')}
+                    onReject={() => booking.id && handleAction(booking.id, 'rejected')}
+                  />
+                ))}
               </div>
             )}
           </TabPanelComponent>

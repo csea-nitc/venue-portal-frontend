@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getValidAccessToken, parseJwt } from '@/lib/auth';
 
 const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = ['00:00', ...Array.from({ length: 23 }, (_, i) => `${String(i + 1).padStart(2, '0')}:00`)];
@@ -77,22 +78,12 @@ export function AvailabilityGrid({
 
     const getSchedule = async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('perms_token') : null;
+        const token = await getValidAccessToken();
         let currentClubId = -1;
         if (token) {
-          try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(
-              atob(base64)
-                .split('')
-                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
-            );
-            const payload = JSON.parse(jsonPayload);
-            currentClubId = payload.userId;
-          } catch (e) {
-            console.error(e);
+          const payload = parseJwt(token);
+          if (payload && payload.userId !== undefined) {
+            currentClubId = Number(payload.userId);
           }
         }
 
@@ -103,7 +94,7 @@ export function AvailabilityGrid({
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         };
 
-        const res = await fetch(url, { headers });
+        const res = await fetch(url, { headers, credentials: 'include' });
         if (res.ok) {
           const resData = await res.json();
           if (resData && resData.success && Array.isArray(resData.bookings)) {

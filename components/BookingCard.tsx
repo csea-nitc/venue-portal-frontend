@@ -28,13 +28,16 @@ export function BookingCard({ booking, showActions, onAccept, onReject }: Bookin
 
   return (
     <>
-      <div className="bg-white rounded-[26px] border border-[#7A1F32]/25 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_25px_-4px_rgba(122,31,50,0.12)] transition-all duration-300 flex flex-col justify-between font-sans">
+      <div
+        onClick={handleOpenDetails}
+        className="bg-white rounded-[26px] border border-[#7A1F32]/25 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_25px_-4px_rgba(122,31,50,0.15)] hover:border-primary/40 transition-all duration-300 flex flex-col justify-between font-sans cursor-pointer group"
+      >
         {/* Top Header: Title and Status Badge */}
         <div className="flex justify-between items-start gap-4 mb-3">
-          <h3 className="text-lg font-bold text-slate-900 line-clamp-1 flex-1 tracking-tight">
+          <h3 className="text-lg font-bold text-slate-900 line-clamp-1 flex-1 tracking-tight group-hover:text-primary transition-colors">
             {booking.title}
           </h3>
-          <div className="shrink-0">
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
             <StatusBadge status={booking.status} />
           </div>
         </div>
@@ -62,7 +65,10 @@ export function BookingCard({ booking, showActions, onAccept, onReject }: Bookin
             <div className="flex items-center justify-between gap-3 mb-3 w-full">
               <button
                 type="button"
-                onClick={onAccept}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAccept?.();
+                }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-full text-sm font-semibold bg-[#9CE6B8] hover:bg-[#86EFAC] text-[#065F46] shadow-2xs transition-all active:scale-95 cursor-pointer"
               >
                 <Check className="w-4 h-4 shrink-0" />
@@ -70,7 +76,10 @@ export function BookingCard({ booking, showActions, onAccept, onReject }: Bookin
               </button>
               <button
                 type="button"
-                onClick={onReject}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReject?.();
+                }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-full text-sm font-semibold bg-[#F8A3A3] hover:bg-[#FCA5A5] text-[#991B1B] shadow-2xs transition-all active:scale-95 cursor-pointer"
               >
                 <X className="w-4 h-4 shrink-0" />
@@ -82,13 +91,11 @@ export function BookingCard({ booking, showActions, onAccept, onReject }: Bookin
 
         {/* See Details link */}
         <div className={showActions ? '' : 'pt-2'}>
-          <button
-            type="button"
-            onClick={handleOpenDetails}
-            className="text-sm font-medium text-[#0284C7] hover:text-[#0369A1] underline underline-offset-3 cursor-pointer transition-colors"
+          <span
+            className="text-sm font-medium text-[#0284C7] group-hover:text-[#0369A1] underline underline-offset-3 transition-colors"
           >
-            See details
-          </button>
+            View status & details &rarr;
+          </span>
         </div>
       </div>
 

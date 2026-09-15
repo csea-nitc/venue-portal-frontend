@@ -4,6 +4,7 @@ import { Menu, LogOut, ChevronDown, Shield, Check } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { getStoredRoles, formatRoleLabel, PortalRole, getPrimaryRouteForRoles } from '@/lib/utils';
+import { logoutUser } from '@/lib/auth';
 
 type HeaderProps = {
   onMenuPress?: () => void;
@@ -84,15 +85,7 @@ export function Header({ onMenuPress }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('perms_logged_in');
-    localStorage.removeItem('perms_token');
-    localStorage.removeItem('perms_user_id');
-    localStorage.removeItem('perms_user_name');
-    localStorage.removeItem('perms_user_email');
-    localStorage.removeItem('perms_user_role');
-    localStorage.removeItem('perms_user_roles');
-    localStorage.removeItem('perms_active_role');
-    router.push('/login');
+    logoutUser();
   };
 
   return (

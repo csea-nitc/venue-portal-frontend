@@ -4,22 +4,43 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { getPrimaryRouteForRoles, getStoredRoles } from '@/lib/utils';
+import { getValidAccessToken, clearAuthTokens } from '@/lib/auth';
 
 export default function Home() {
   const router = useRouter();
+
   useEffect(() => {
-    const loggedIn = localStorage.getItem('perms_logged_in');
-    if (!loggedIn) {
-      router.push('/login');
-      return;
+    let isMounted = true;
+
+    async function checkAuth() {
+      const loggedIn = localStorage.getItem('perms_logged_in');
+      if (!loggedIn) {
+        router.push('/login');
+        return;
+      }
+
+      const token = await getValidAccessToken();
+      if (!isMounted) return;
+
+      if (!token) {
+        clearAuthTokens();
+        router.push('/login?error=Session+expired.+Please+sign+in+again.');
+        return;
+      }
+
+      const roles = getStoredRoles();
+      if (roles.length > 0) {
+        router.replace(getPrimaryRouteForRoles(roles));
+      } else {
+        router.push('/login');
+      }
     }
 
-    const roles = getStoredRoles();
-    if (roles.length > 0) {
-      router.replace(getPrimaryRouteForRoles(roles));
-    } else {
-      router.push('/login');
-    }
+    checkAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   return (
